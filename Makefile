@@ -1,7 +1,8 @@
 
 CC = icc -openmp -vec_report0
 #CC= gcc -fopenmp -Wall 
-CFLAGS =  -O2  -g
+CXXFLAGS = -Wall -w2 -O2  -g
+CXX = icpc
 OPTS = 
 PG = 
 CFLAGS += $(OPTS)
