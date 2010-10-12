@@ -21,15 +21,17 @@ namespace gadgetreader{
                 first_file+=".0";
                 //and then try again
                 if(!(fd=fopen(first_file.c_str(),"r")) || check_filetype(fd))
-                        ERROR("Could not open %s or %s.0\nDoes not exist, or is corrupt.\n",snap_filename.c_str(),snap_filename.c_str());
+                        ERROR("Could not open %s (.0)\nDoes not exist, or is corrupt.\n",snap_filename.c_str());
         }
         //Read the first file
         first_map= construct_file_map(fd,first_file);
         //Set the global variables. 
         base_filename=first_file;
         //Take the ".0" from the end if needed.
-        if(base_filename.compare(base_filename.size()-2,2,".0"))
-                base_filename.erase(base_filename.end()-2,base_filename.end());
+        if(base_filename.compare(base_filename.size()-2,2,".0")){
+                std::string::iterator it=base_filename.end();
+                base_filename.erase(it-2,it);
+        }
         files_expected=first_map.header.num_files;
         if(files_expected < 1){
                 WARN("Implausible number of files supposedly in simulation set: %d\n",files_expected);
