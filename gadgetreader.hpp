@@ -5,6 +5,7 @@
 
 #include <map>
 #include <set>
+#include <vector>
 #include <string>
 #include <stdint.h>
 #include <stdlib.h>
@@ -29,19 +30,19 @@ namespace gadgetreader{
     double   mass[N_TYPE];
     double   time;
     double   redshift;
-    int32_t      flag_sfr;
-    int32_t      flag_feedback;
-    int32_t      npartTotal[N_TYPE];
-    int32_t      flag_cooling;
-    int32_t      num_files;
+    int32_t  flag_sfr;
+    int32_t  flag_feedback;
+    int32_t  npartTotal[N_TYPE];
+    int32_t  flag_cooling;
+    int32_t  num_files;
     double   BoxSize;
     double   Omega0;
     double   OmegaLambda;
     double   HubbleParam; 
-    int32_t      flag_stellarage;
-    int32_t      flag_metals;
-    int32_t      NallHW[N_TYPE];
-    int32_t      flag_entr_ics;
+    int32_t  flag_stellarage;
+    int32_t  flag_metals;
+    int32_t  NallHW[N_TYPE];
+    int32_t  flag_entr_ics;
     char     fill[256- N_TYPE*sizeof(uint32_t)- (6+N_TYPE)*sizeof(double)- (7+2*N_TYPE)*sizeof(int32_t)];  /* fills to 256 Bytes */
   } gadget_header;
   
@@ -74,16 +75,9 @@ namespace gadgetreader{
   //Try to do all the fseeks and mapping in the constructor.
   class GadgetIISnap{
           public:
-                  //Constuctor: does most of the hard work.
+                  //Constuctor: does most of the hard work of looking over the file.
                   GadgetIISnap(f_name snap_filename, bool debugflag);
-                  //Copy constructor
-                  GadgetIISnap(const GadgetIISnap& other);
-                  GadgetIISnap& operator=(const GadgetIISnap& rhs);
-                  //Destructor
-                  ~GadgetIISnap();
-                  //Copy constructor
-                  GadgetIISnap(GadgetIISnap &);
-
+                  
                   /*Allocates memory for a block of particles, then reads the particles into 
                    * the block. Returns NULL if cannot complete.
                    * Returns a block of particles. Remember to free the pointer it gives back once done.
@@ -131,13 +125,10 @@ namespace gadgetreader{
   
                   //Base filename for the snapshot
                   f_name base_filename;
-                  int num_files; //Number of files in the snapshot
-                  //This is private because the whole point of the interface is that 
-                  //we never want to know it.
                   bool swap_endian; //Do we want to swap the enddianness of the files?
                   bool format_2; //Are we using format 2 files?
                   bool debug; //Output debug information?
-                  file_map *file_maps; //Pointer to the file data
+                  std::vector<file_map> file_maps; //Pointer to the file data
   };
 
 }

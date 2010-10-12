@@ -11,6 +11,7 @@ namespace gadgetreader{
         f_name first_file=snap_filename;
         FILE *fd;
         int64_t npart[N_TYPE]={0};
+        int files_expected=1;
         swap_endian = false;
         debug=debugflag;
 
@@ -29,61 +30,43 @@ namespace gadgetreader{
         //Take the ".0" from the end if needed.
         if(base_filename.compare(base_filename.size()-2,2,".0"))
                 base_filename.erase(base_filename.end()-2,base_filename.end());
-        num_files=first_map.header.num_files;
-        if(num_files > 10000 || num_files < 1)
-                ERROR("Implausible number of files in simulation set: %d\n",num_files);
-        //Make the file_maps
-        file_maps = new file_map[num_files];
+        files_expected=first_map.header.num_files;
+        if(files_expected < 1){
+                WARN("Implausible number of files supposedly in simulation set: %d\n",files_expected);
+                ERROR("Probably corrupt header in first file. Dying.\n");
+        }
         //Put the information from the first file in
-        file_maps[0]=first_map;
+        file_maps.push_back(first_map);
         //Close the first file
         fclose(fd);
         //Get the information for the other files.
-        for(int i=1;i<num_files;i++){
+        for(int i=1;i<files_expected;i++){
                 f_name c_name=base_filename;
                 char tmp[6];
+                file_map tmp_map;
                 snprintf(tmp,6,".%d",i);
                 c_name+=(std::string(tmp));
-                if(!(fd=fopen(c_name.c_str(),"r")))
-                        ERROR("Could not open file %d of %d\n",i,num_files);
-                file_maps[i]=construct_file_map(fd,c_name);
+                if(!(fd=fopen(c_name.c_str(),"r"))){
+                        WARN("Could not open file %d of %d\n",i,files_expected);
+                        continue;
+                }
+                tmp_map=construct_file_map(fd,c_name);
                 fclose(fd);
-                if(!check_headers(file_maps[i].header,file_maps[0].header))
-                        ERROR("Headers inconsistent!");
+                if(!check_headers(tmp_map.header,file_maps[0].header)){
+                        WARN("Headers of inconsistent between file 0 and file %d, ignoring file %d\n",i,i);
+                        continue;
+                }
+                file_maps.push_back(tmp_map);
+                for(int j=0; j<N_TYPE; j++)
+                   npart[j]+=file_maps[i].header.npart[j];
         }
         //Check we have found as many particles as we were expecting.
-        for(int i=0; i<num_files; i++)
-            for(int j=0; j<N_TYPE; j++)
-               npart[j]+=file_maps[i].header.npart[j];
         for(int i=0; i<N_TYPE; i++)
             if(npart[i] != GetNpart(i))
-               ERROR("Expected %ld particles of Type %d, but found %ld!\n",npart[i],i,GetNpart(i));
+               WARN("Expected %ld particles of Type %d, but found %ld!\n",npart[i],i,GetNpart(i));
         return;
   }
 
-  GadgetIISnap::~GadgetIISnap()
-  {
-     delete[] file_maps;
-  }
-
-  //Copy constructor
-  GadgetIISnap::GadgetIISnap(const GadgetIISnap& other)
-  {
-          //Allocate memory
-          file_maps=new file_map[other.num_files];
-          //Just call the assignment operator for the rest: this is non-optimal, but whatever.
-          (*this)=other;
-  }
-
-  GadgetIISnap& GadgetIISnap::operator=(const GadgetIISnap& rhs)
-  {
-          base_filename=rhs.base_filename;
-          swap_endian=rhs.swap_endian;
-          num_files=rhs.num_files;
-          std::copy(rhs.file_maps,rhs.file_maps+rhs.num_files,file_maps);
-          return *this;
-  }
-  
   //This takes an open file and constructs a map of where the blocks are within it, and then returns said map.
   //It ought to support endian swapped files as well as Gadget-I files.
   file_map GadgetIISnap::construct_file_map(FILE *fd,const f_name strfile)
@@ -127,12 +110,23 @@ namespace gadgetreader{
                   //Do special things for the HEAD block
                   if(strncmp(c_name,default_blocks[0],4) ==0){
                           //Read the actual header. 
-                          if(c_info.length != 256) ERROR("Mis-sized HEAD block in %s\n",file);
+                          if(c_info.length != sizeof(gadget_header)){
+                                  WARN("Mis-sized HEAD block in %s\n",file);
+                                  c_map.header.num_files=-1;
+                                  return c_map;
+                          }
                           if(!(check_fread(&(c_map.header),sizeof(gadget_header),1,fd)) ||
-                          !(check_fread(&record_size,sizeof(int32_t),1,fd)))
-                                  ERROR("Could not read HEAD in %s!\n",file);
+                          !(check_fread(&record_size,sizeof(int32_t),1,fd))){
+                                  WARN("Could not read HEAD in %s!\n",file);
+                                  c_map.header.num_files=-1;
+                                  return c_map;
+                          }
                           if(swap_endian) endian_swap(&record_size);
-                          if(record_size != 256) ERROR("Bad record size for HEAD in %s!\n",file);
+                          if(record_size != sizeof(gadget_header)){
+                                 WARN("Bad record size for HEAD in %s!\n",file);
+                                 c_map.header.num_files=-1;
+                                 return c_map;
+                          }
                           //Next block
                           continue;
                   }
@@ -142,8 +136,11 @@ namespace gadgetreader{
                   fseek(fd,c_info.length,SEEK_CUR);
                   if(!(check_fread(&record_size,sizeof(int32_t),1,fd)) || 
                       ( swap_endian || record_size != c_info.length) ||
-                      ( !swap_endian || endian_swap(&record_size) != c_info.length))
-                          ERROR("Corrupt or non-existent record for block %s in %s!\n",c_name,file);
+                      ( !swap_endian || endian_swap(&record_size) != c_info.length)){
+                          WARN("Corrupt or non-existent record for block %s in %s!\n",c_name,file);
+                          WARN("Cannot read the rest of this file\n");
+                          return c_map;
+                  }
                   //If POS or VEL block, 3 floats per particle.
                   if(strncmp(c_name,default_blocks[1],4)==0 || strncmp(c_name,default_blocks[2],4)==0)
                       c_info.partlen=12;
@@ -270,7 +267,7 @@ namespace gadgetreader{
   {
         std::string bname(BlockName);
         //Find total number of particles needed
-        for(int i=0; i<num_files; i++)
+        for(int i=0; i<file_maps.size(); i++)
                 if(file_maps[i].blocks.count(bname))
                         return true;
         return false;
@@ -282,7 +279,7 @@ namespace gadgetreader{
         int64_t size=0;
         std::string bname(BlockName);
         //Find total number of particles needed
-        for(int i=0; i<num_files; i++)
+        for(int i=0; i<file_maps.size(); i++)
                 if(file_maps[i].blocks.count(bname))
                         size+=file_maps[i].blocks[bname].length;
         return size;
@@ -293,7 +290,7 @@ namespace gadgetreader{
   {
           std::map<std::string,block_info>::iterator it;
           std::set<std::string> names;
-          for(int i=0; i<num_files;i++)
+          for(int i=0; i<file_maps.size();i++)
                 for(it=file_maps[i].blocks.begin() ; it != file_maps[i].blocks.end(); it++)
                           names.insert((*it).first);
           return names;
@@ -321,7 +318,7 @@ namespace gadgetreader{
                 return 0;
         }
         //Read a chunk of particles from a file
-        for(int i=0;i<num_files; i++){
+        for(int i=0;i<file_maps.size(); i++){
                 uint32_t read_data,start_pos=0,npart_file;
                 FILE *fd;
                 block_info cur_block;
@@ -363,7 +360,7 @@ namespace gadgetreader{
                                 
                 //Open file: If this fails skip to the next file.
                 if(!(fd=fopen(file_maps[i].name.c_str(),"r"))){
-                        WARN("Could not open file %d of %d, continuing\n",i,num_files);
+                        WARN("Could not open file %d of %lu, continuing\n",i,file_maps.size());
                         continue;
                 }
                 //Seek to first particle
@@ -373,7 +370,7 @@ namespace gadgetreader{
                 read_data=fread(block+npart_read*cur_block.partlen,cur_block.partlen,npart_file,fd);
                 //Don't die if we read the wrong amount of data; maybe we can find it in the next file.
                 if(read_data !=npart_file)
-                        WARN("Only read %d particles of %d from file %d\n",read_data,npart_file,i);
+                        WARN("Only read %u particles of %u from file %d\n",read_data,npart_file,i);
                 fclose(fd);
                 npart_read+=read_data;
         }
