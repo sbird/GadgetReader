@@ -20,9 +20,6 @@ inline uint32_t endian_swap(uint32_t* x)
     return *x;
 }
 
-/* Read data from a file, print an error message if things go wrong*/
-size_t check_fread(void *ptr, size_t size, size_t nmemb, FILE * stream);
-
 /*Swap the endianness of a range of integers*/
 /*range is in bytes*/
 void multi_endian_swap(uint32_t * start,int32_t range);

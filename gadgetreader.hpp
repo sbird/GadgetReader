@@ -19,12 +19,12 @@
 #define BNDRY_TYPE 5
 #define N_TYPE 6
 
-namespace gadgetreader{
+namespace GadgetReader{
 
-  //The Gadget-II file header.
-  //This differs from the standard formulation by using explicit 
-  //integer sizes and including the NallHW group, which allows for more 
-  //than 2^32 particles.
+  //The Gadget file header.
+  /*This differs from the standard formulation by using explicit integer sizes. 
+   * Note however that at least one implementation of N-GenICs does NOT have 
+   * the NallHW field, setting it to something arbitrary.*/
   typedef struct {
     uint32_t npart[N_TYPE];
     double   mass[N_TYPE];
@@ -53,7 +53,7 @@ namespace gadgetreader{
   typedef struct{
     //Starting position in the file
     int64_t start_pos;
-    uint32_t length; //in bytes
+    uint32_t length; //in bytes, excluding the two integer "record sizes" at either end
     short partlen; //length for a single particle. Likely to be 4 or 12.
   } block_info;
   
@@ -69,43 +69,41 @@ namespace gadgetreader{
   } file_map;
     
   
-  //Class for reading Gadget II snapshots. 
-  //Eventually generalise this to Gadget I snapshots as well. 
-  //A key point of this is to hide the number of files behind a generic interface, and to do as little I/O as possible.
-  //Try to do all the fseeks and mapping in the constructor.
-  class GadgetIISnap{
+  //Class for reading Gadget snapshots. 
+  class GSnap{
           public:
-                  //Constuctor: does most of the hard work of looking over the file.
-                  GadgetIISnap(f_name snap_filename, bool debugflag);
+                  /*Constuctor: does most of the hard work of looking over the file.
+                   * Will seek through the file, reading the header and building a map of where the 
+                   * data blocks are.*/
+                  //TODO: Find a better way to work out partlen than simply hardcoding 4 or 12.
+                  GSnap(std::string snap_filename);
                   
-                  /*Allocates memory for a block of particles, then reads the particles into 
-                   * the block. Returns NULL if cannot complete.
-                   * Returns a block of particles. Remember to free the pointer it gives back once done.
+                  /* Reads particles from a file block into the memory pointed to by block
+                   * Returns the number of particles read.
                    * Takes: block name, 
                    *        particles to read, 
-                   *        void pointer to allocated memory for block
+                   *        pointer to allocated memory for block
                    *        particles to skip initially
                    *        Types to skip, as a bitfield. 
                    *        Pass 1 to skip baryons, 3 to skip baryons and dm, 2 to skip dm, etc.
                    *        Only skip types for which the block is actually present:
-                   *        Unfortunately there is no way of the library knowing which particle 
-                   *        types are present*/
-                  int64_t GetBlock(char* BlockName, char *block, int64_t npart_toread, int64_t start_part, int skip_type);
+                   *        Unfortunately there is no way of the library knowing which particle has which type,
+                   *        so there is no way of telling that in advance.  */
+                  int64_t GetBlock(std::string BlockName, char *block, int64_t npart_toread, int64_t start_part, int skip_type);
                   //Tests whether a particular block exists
-                  bool IsBlock(char * BlockName);
+                  bool IsBlock(std::string BlockName);
                   //Gets a file header from the first file.
                   //Note this means GetHeader().Npart[0] != GetNpart(0)
                   //This has to be the case to avoid overflow issues.
-                  //TODO: special-case mass; 
-                  //always set the mass in the header to save memory. 
-                  //No-one uses variable mass particles anyway.
                   gadget_header GetHeader();
                   //Convenience function to get the total number of particles easily for a type
                   //Note when calculating total header, to add npart, not to use npart total, 
                   //in case we have more than 2**32 particles.
                   int64_t GetNpart(int type);
                   //Get total size of a block in the snapshot, in bytes.
-                  int64_t GetBlockSize(char * BlockName);
+                  int64_t GetBlockSize(std::string BlockName);
+                  //Get number of particles a block has data for
+                  int64_t GetBlockParts(std::string BlockName);
                   //Get a list of all blocks present in the snapshot.
                   std::set<std::string> GetBlocks();
           private:
@@ -127,7 +125,8 @@ namespace gadgetreader{
                   f_name base_filename;
                   bool swap_endian; //Do we want to swap the enddianness of the files?
                   bool format_2; //Are we using format 2 files?
-                  bool debug; //Output debug information?
+                  bool bad_head64; //This flag indicates that the header is setting 
+                                  //the 64 bit part of nparttotal incorrectly
                   std::vector<file_map> file_maps; //Pointer to the file data
   };
 

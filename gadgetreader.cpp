@@ -2,18 +2,18 @@
 #include "read_utils.h"
 #include <string.h>
 
-namespace gadgetreader{
+namespace GadgetReader{
 
   //Constructor; this does almost all the hard work of building a "map" of the block positions
-  GadgetIISnap::GadgetIISnap(f_name snap_filename, bool debugflag=false)
+  GSnap::GSnap(std::string snap_filename)
   {
         file_map first_map;
         f_name first_file=snap_filename;
         FILE *fd;
-        int64_t npart[N_TYPE]={0};
+        int64_t npart[N_TYPE];
         int files_expected=1;
         swap_endian = false;
-        debug=debugflag;
+        bad_head64=false;
 
         //Try to open the file 
         if(!(fd=fopen(first_file.c_str(),"r")) || check_filetype(fd)){
@@ -28,7 +28,7 @@ namespace gadgetreader{
         //Set the global variables. 
         base_filename=first_file;
         //Take the ".0" from the end if needed.
-        if(base_filename.compare(base_filename.size()-2,2,".0")){
+        if(base_filename.compare(base_filename.size()-2,2,".0")==0){
                 std::string::iterator it=base_filename.end();
                 base_filename.erase(it-2,it);
         }
@@ -41,6 +41,9 @@ namespace gadgetreader{
         file_maps.push_back(first_map);
         //Close the first file
         fclose(fd);
+        //Add the particles for this file to the totals
+        for(int j=0; j<N_TYPE; j++)
+           npart[j]=file_maps[0].header.npart[j];
         //Get the information for the other files.
         for(int i=1;i<files_expected;i++){
                 f_name c_name=base_filename;
@@ -49,13 +52,13 @@ namespace gadgetreader{
                 snprintf(tmp,6,".%d",i);
                 c_name+=(std::string(tmp));
                 if(!(fd=fopen(c_name.c_str(),"r"))){
-                        WARN("Could not open file %d of %d\n",i,files_expected);
+                        WARN("Could not open file %d of %d (%s)\n",i+1,files_expected,c_name.c_str());
                         continue;
                 }
                 tmp_map=construct_file_map(fd,c_name);
                 fclose(fd);
                 if(!check_headers(tmp_map.header,file_maps[0].header)){
-                        WARN("Headers of inconsistent between file 0 and file %d, ignoring file %d\n",i,i);
+                        WARN("Headers inconsistent between file 0 and file %d, ignoring file %d\n",i,i);
                         continue;
                 }
                 file_maps.push_back(tmp_map);
@@ -63,49 +66,58 @@ namespace gadgetreader{
                    npart[j]+=file_maps[i].header.npart[j];
         }
         //Check we have found as many particles as we were expecting.
-        for(int i=0; i<N_TYPE; i++)
+        for(int i=0; i<N_TYPE; i++){
+            /*If we have few enough particles to fit into 32 bits and our header is 
+             * strange, set bad_head64, indicating that our long word is bogus.*/
+            if(npart[i] != GetNpart(i) && npart[i] == file_maps[0].header.npartTotal[i]){
+                   WARN("Detected bogus value for 64-bit particle number in header!\n"); 
+                   bad_head64=true;
+            }
             if(npart[i] != GetNpart(i))
-               WARN("Expected %ld particles of Type %d, but found %ld!\n",npart[i],i,GetNpart(i));
+                    WARN("Expected %ld particles of Type %d, but found %ld!\n",GetNpart(i),i,npart[i]);
+        }
         return;
   }
 
   //This takes an open file and constructs a map of where the blocks are within it, and then returns said map.
   //It ought to support endian swapped files as well as Gadget-I files.
-  file_map GadgetIISnap::construct_file_map(FILE *fd,const f_name strfile)
+  file_map GSnap::construct_file_map(FILE *fd,const f_name strfile)
   {
           file_map c_map;
           //Default ordering of blocks for Gadget-I files
-          char *default_blocks[12]={"HEAD","POS ","VEL ","ID  ","MASS","U   ","RHO ","NE  ","NH  ","NHE ","HSML","SFR "};
-          char** b_ptr=default_blocks;
+          const char *default_blocks[12]={"HEAD","POS ","VEL ","ID  ","MASS","U   ","RHO ","NE  ","NH  ","NHE ","HSML","SFR "};
+          const char** b_ptr=default_blocks;
           uint32_t record_size;
           c_map.name=strfile;
+          //Set a default "bad" value for the return
+          c_map.header.num_files=-1;
           const char * file=strfile.c_str();
           //Read now until we run out of file
           while(!feof(fd)){
                   block_info c_info;
-                  char c_name[5];
+                  char c_name[5]={'\0'};
                   //Read another block header
                   if(format_2){
                      c_info.length=read_G2_block_head(c_name,fd,file);
                      if(c_info.length ==0)
                              break;//We have run out of file
-                     if(!(check_fread(&record_size,sizeof(int32_t),1,fd))){
+                     if(fread(&record_size,sizeof(int32_t),1,fd)!=1){
                              WARN("Ran out of data in %s before block %s started\n",file,c_name);
                              break;
                      }
                      if(swap_endian) endian_swap(&record_size);
+                     //c_info.length includes the record_size integers.
                      if(c_info.length != record_size){
-                             WARN("Corrupt record in %s for block %s, skipping rest of file\n",file,c_name);
+                             WARN("Corrupt record in %s for block %s (%u vs %u), skipping rest of file\n",file,c_name, c_info.length, record_size);
                              break;
                      }
-                     if(debug) printf("Found block %s of size %u!",c_name,c_info.length);
                   }
                   else{
                     //For Gadget-I files, we have to settle for less certainty, 
                     //and read the name from a pre-guessed table
                     //and the length from the record length.
                     strncpy(c_name, *(b_ptr++),5);
-                    if(!check_fread(&c_info.length,sizeof(int32_t),1,fd))
+                    if(fread(&c_info.length,sizeof(int32_t),1,fd)!=1)
                             break;//out of file
                     if(swap_endian) endian_swap(&c_info.length);
                   }
@@ -114,11 +126,10 @@ namespace gadgetreader{
                           //Read the actual header. 
                           if(c_info.length != sizeof(gadget_header)){
                                   WARN("Mis-sized HEAD block in %s\n",file);
-                                  c_map.header.num_files=-1;
                                   return c_map;
                           }
-                          if(!(check_fread(&(c_map.header),sizeof(gadget_header),1,fd)) ||
-                          !(check_fread(&record_size,sizeof(int32_t),1,fd))){
+                          if((fread(&(c_map.header),sizeof(gadget_header),1,fd)!=1) ||
+                          (fread(&record_size,sizeof(int32_t),1,fd)!=1)){
                                   WARN("Could not read HEAD in %s!\n",file);
                                   c_map.header.num_files=-1;
                                   return c_map;
@@ -136,16 +147,19 @@ namespace gadgetreader{
                   c_info.start_pos=ftell(fd);
                   //Skip reading the actual data
                   fseek(fd,c_info.length,SEEK_CUR);
-                  if(!(check_fread(&record_size,sizeof(int32_t),1,fd)) || 
-                      ( swap_endian || record_size != c_info.length) ||
-                      ( !swap_endian || endian_swap(&record_size) != c_info.length)){
-                          WARN("Corrupt or non-existent record for block %s in %s!\n",c_name,file);
+                  if((fread(&record_size,sizeof(int32_t),1,fd)!=1) || 
+                      ( !swap_endian && record_size != c_info.length) ||
+                      ( swap_endian && endian_swap(&record_size) != c_info.length)){
+                          WARN("Corrupt record for block %s in %s (%u, %u)!\n",c_name,file, c_info.length, record_size);
                           WARN("Cannot read the rest of this file\n");
                           return c_map;
                   }
                   //If POS or VEL block, 3 floats per particle.
                   if(strncmp(c_name,default_blocks[1],4)==0 || strncmp(c_name,default_blocks[2],4)==0)
-                      c_info.partlen=12;
+                      c_info.partlen=3*sizeof(float);
+                  //Otherwise one float per particle.
+                  else
+                      c_info.partlen=sizeof(float);
                   //Append the current info to the map.
                   c_map.blocks[std::string(c_name)] = c_info;
           }
@@ -158,13 +172,13 @@ namespace gadgetreader{
   * name - place to store block name
   * fd - file descriptor
   * file - filename of open file */
- uint32_t GadgetIISnap::read_G2_block_head(char* name, FILE *fd, const char * file)
+ uint32_t GSnap::read_G2_block_head(char* name, FILE *fd, const char * file)
  {
         uint32_t head[4];
         //Read the "block header" record, only present on Gadget-II files. 
         //Has format: 
         //size (8), name (HEAD), length (256), size (8)
-        if(check_fread(&head,sizeof(uint32_t),4,fd)==0)
+        if(fread(&head,sizeof(uint32_t),4,fd)!=4)
            //If we have run out of file, we can just return.
            return 0;
         if(swap_endian)  multi_endian_swap(&head[0],4);
@@ -174,21 +188,22 @@ namespace gadgetreader{
                 WARN("Header bytes are: %s %u\n",(char *) head[1],head[2]);
                 ERROR("Maybe trying to read old-format file as new-format?\n");
         }
-        strncpy(name,(char *)head[1],4);
+        strncpy(name,(char *)&head[1],4);
         //Null-terminate the string
         *(name+5)='\0';
-        return head[2];
+        //Don't include the two "record_size" indicators in the total length count
+        return head[2]-2*sizeof(uint32_t);
   }
 
   /*Sets swap_endian and format_2. Returns 0 for success, 1 for an empty file, and 2 
    * if the filetype is weird (ie, if you tried to open a text file by mistake)*/
-  int GadgetIISnap::check_filetype(FILE* fd)
+  int GSnap::check_filetype(FILE* fd)
   {
           uint32_t record_size;
           //Start at the beginning.
           rewind(fd);
           //Read the first integer
-          if(!check_fread(&record_size,sizeof(int32_t),1,fd)){
+          if(fread(&record_size,sizeof(int32_t),1,fd)!=1){
                  return 1;
           }
           switch(record_size){
@@ -227,7 +242,7 @@ namespace gadgetreader{
   /*Check the consistency of file headers. This is just a short sanity check 
    * to make sure the user hasn't put two entirely different simulations with the same 
    * snapshot name in the same directory or something*/
-  bool GadgetIISnap::check_headers(gadget_header head1, gadget_header head2)
+  bool GSnap::check_headers(gadget_header head1, gadget_header head2)
   {
     /*Check single quantities*/
     /*Even the floats ought to be really identical*/
@@ -246,61 +261,73 @@ namespace gadgetreader{
     /*Check array quantities*/
     for(int i=0; i<6; i++)
             if(head1.mass[i] != head2.mass[i] ||
-                head1.npartTotal[i] != head2.npartTotal[i] ||
-                head1.NallHW[i] != head2.NallHW[i])
+                head1.npartTotal[i] != head2.npartTotal[i])// ||
+//                head1.NallHW[i] != head2.NallHW[i])
                     return false;
+/*                At least one version of N-GenICs writes a header file which 
+                ignores everything past flag_metals (!), leaving it uninitialised. 
+                Therefore, we can't check them. */
     return true;
   }
 
   /* Gets the total number of particles in a simulation. */
-  int64_t GadgetIISnap::GetNpart(int type)
+  int64_t GSnap::GetNpart(int type)
   {
-          int64_t npart;
+          int64_t npart=0;
           if(type >= N_TYPE || type < 0) 
                   return 0;
-          //Get the part that doesn't fit in 32 bits
-          npart=file_maps[0].header.NallHW[type];
+          //Get the part that doesn't fit in 32 bits, if it isn't bogus
+          if(!bad_head64)
+                  npart=file_maps[0].header.NallHW[type];
           //Bitshift it and add on the other part
           return (npart << 32) + file_maps[0].header.npartTotal[type];
   }
 
   /*Check the given block exists*/
-  bool GadgetIISnap::IsBlock(char * BlockName)
+  bool GSnap::IsBlock(std::string BlockName)
   {
-        std::string bname(BlockName);
         //Find total number of particles needed
-        for(int i=0; i<file_maps.size(); i++)
-                if(file_maps[i].blocks.count(bname))
+        for(unsigned int i=0; i<file_maps.size(); i++)
+                if(file_maps[i].blocks.count(BlockName))
                         return true;
         return false;
   }
   
-  /*Get total size of a block in the snapshot, in bytes*/
-  int64_t GadgetIISnap::GetBlockSize(char * BlockName)
+  /*Get number of particles a block has data for*/
+  int64_t GSnap::GetBlockParts(std::string BlockName)
   {
         int64_t size=0;
-        std::string bname(BlockName);
         //Find total number of particles needed
-        for(int i=0; i<file_maps.size(); i++)
-                if(file_maps[i].blocks.count(bname))
-                        size+=file_maps[i].blocks[bname].length;
+        for(unsigned int i=0; i<file_maps.size(); i++)
+                if(file_maps[i].blocks.count(BlockName))
+                        size+=file_maps[i].blocks[BlockName].length/file_maps[i].blocks[BlockName].partlen;
+        return size;
+  }
+
+  /*Get total size of a block in the snapshot, in bytes*/
+  int64_t GSnap::GetBlockSize(std::string BlockName)
+  {
+        int64_t size=0;
+        //Find total number of particles needed
+        for(unsigned int i=0; i<file_maps.size(); i++)
+                if(file_maps[i].blocks.count(BlockName))
+                        size+=file_maps[i].blocks[BlockName].length;
         return size;
   }
 
   /*Get a set of the block names in the snapshot*/
-  std::set<std::string> GadgetIISnap::GetBlocks()
+  std::set<std::string> GSnap::GetBlocks()
   {
           std::map<std::string,block_info>::iterator it;
           std::set<std::string> names;
-          for(int i=0; i<file_maps.size();i++)
+          for(unsigned int i=0; i<file_maps.size();i++)
                 for(it=file_maps[i].blocks.begin() ; it != file_maps[i].blocks.end(); it++)
                           names.insert((*it).first);
           return names;
   }
 
-  /*Allocates memory for a block of particles, then reads the particles into 
-   * the block. Returns NULL if cannot complete.
-   * Returns a block of particles. Remember to free the pointer it gives back once done.
+  /* Reads particles from a file block into the memory pointed to by block
+   * Returns the number of particles read.
    * Takes: block name, 
    *        particles to read, 
    *        pointer to allocated memory for block
@@ -310,25 +337,24 @@ namespace gadgetreader{
    *        Only skip types for which the block is actually present:
    *        Unfortunately there is no way of the library knowing which particle has which type, so 
    *        there is no way of telling that in advance.  */
-  int64_t GadgetIISnap::GetBlock(char* BlockName, char *block, int64_t npart_toread, int64_t start_part, int skip_type)
+  int64_t GSnap::GetBlock(std::string BlockName, char *block, int64_t npart_toread, int64_t start_part, int skip_type)
   {
         int64_t npart_read;
-        std::string BlockNameStr(BlockName);
         //Check the block really exists
         if(!IsBlock(BlockName)){
-                WARN("Block %s is not in this snapshot\n",BlockName);
+                WARN("Block %s is not in this snapshot\n",BlockName.c_str());
                 return 0;
         }
         //Read a chunk of particles from a file
-        for(int i=0;i<file_maps.size(); i++){
+        for(unsigned int i=0;i<file_maps.size(); i++){
                 uint32_t read_data,start_pos=0,npart_file;
                 FILE *fd;
                 block_info cur_block;
                 //Get current block
-                if(file_maps[i].blocks.count(BlockNameStr))
-                        cur_block=file_maps[i].blocks[BlockNameStr];
+                if(file_maps[i].blocks.count(BlockName))
+                        cur_block=file_maps[i].blocks[BlockName];
                 else{
-                       WARN("Block %s not in file %d\n",BlockName,i);
+                       WARN("Block %s not in file %d\n",BlockName.c_str(),i);
                        continue;
                 }
                 npart_file = cur_block.length/cur_block.partlen;
@@ -381,4 +407,9 @@ namespace gadgetreader{
         }
         return npart_read;
   }
+
+/* Return a header*/
+gadget_header GSnap::GetHeader(){
+        return file_maps[0].header;
+}
 }

@@ -1,25 +1,29 @@
 
-CC = icc -openmp -vec_report0
-#CC= gcc -fopenmp -Wall 
-CXXFLAGS = -Wall -w2 -O2  -g
+CC = icc -vec_report0
+# CC= gcc
+CFLAGS = -w2 -O2  -g -fPIC
+# CFLAGS = -Wall -O2  -g -fPIC
+CXXFLAGS = $(CFLAGS)
 CXX = icpc
+# CXX = g++
 OPTS = 
 PG = 
 CFLAGS += $(OPTS)
 COM_INC = parameters.h Makefile
 LINK=$(CC)
-#LINK=$(CC) -lm -lgomp -lsrfftw -lsfftw  -L$(FFTW)
 obj=gadgetreader.o read_utils.o
 head=read_utils.h gadgetreader.hpp
 
 .PHONY: all clean
 
-all: $(obj)
+all: libgadread.so
 
-
+libgadread.so: $(obj)
+	$(CC) -shared -Wl,-soname,libgadread.so -o libgadread.so   *.o
 gadgetreader.o: gadgetreader.cpp $(head) read_utils.o
 read_utils.o: read_utils.c read_utils.h
-test: test.c libgadread.o
+test: PGIIhead libgadread.so
+PGIIhead: PGIIhead.cpp libgadread.so
 
 clean: 
 	rm $(obj) 
