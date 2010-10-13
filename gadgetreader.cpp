@@ -339,7 +339,7 @@ namespace GadgetReader{
    *        there is no way of telling that in advance.  */
   int64_t GSnap::GetBlock(std::string BlockName, char *block, int64_t npart_toread, int64_t start_part, int skip_type)
   {
-        int64_t npart_read;
+        int64_t npart_read=0;
         //Check the block really exists
         if(!IsBlock(BlockName)){
                 WARN("Block %s is not in this snapshot\n",BlockName.c_str());

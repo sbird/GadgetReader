@@ -22,9 +22,10 @@ libgadread.so: $(obj)
 	$(CC) -shared -Wl,-soname,libgadread.so -o libgadread.so   *.o
 gadgetreader.o: gadgetreader.cpp $(head) read_utils.o
 read_utils.o: read_utils.c read_utils.h
-test: PGIIhead libgadread.so
+test: PGIIhead libgadread.so btest
 PGIIhead: PGIIhead.cpp libgadread.so
-
+btest: btest.cpp
+	$(CC) $(CFLAGS) btest.cpp -lboost_unit_test_framework -o btest
 clean: 
 	rm $(obj) 
 
