@@ -1,11 +1,15 @@
 #include "gadgetreader.hpp"
 #include "read_utils.h"
 #include <string.h>
+#include <stdio.h>
 
 namespace GadgetReader{
 
+/*Error output macros*/
+#define ERROR(...) do{ fprintf(stderr,__VA_ARGS__);abort();}while(0)
+#define WARN(...) do{ if(debug) fprintf(stderr, __VA_ARGS__);}while(0)
   //Constructor; this does almost all the hard work of building a "map" of the block positions
-  GSnap::GSnap(std::string snap_filename)
+  GSnap::GSnap(std::string snap_filename, bool debugf)
   {
         file_map first_map;
         f_name first_file=snap_filename;
@@ -14,14 +18,17 @@ namespace GadgetReader{
         int files_expected=1;
         swap_endian = false;
         bad_head64=false;
+        debug=debugf;
 
         //Try to open the file 
         if(!(fd=fopen(first_file.c_str(),"r")) || check_filetype(fd)){
                 //Append ".0" to the filename if necessary.
                 first_file+=".0";
                 //and then try again
-                if(!(fd=fopen(first_file.c_str(),"r")) || check_filetype(fd))
-                        ERROR("Could not open %s (.0)\nDoes not exist, or is corrupt.\n",snap_filename.c_str());
+                if(!(fd=fopen(first_file.c_str(),"r")) || check_filetype(fd)){
+                        WARN("Could not open %s (.0)\nDoes not exist, or is corrupt.\n",snap_filename.c_str());
+                        return;
+                }
         }
         //Read the first file
         first_map= construct_file_map(fd,first_file);
@@ -35,7 +42,7 @@ namespace GadgetReader{
         files_expected=first_map.header.num_files;
         if(files_expected < 1){
                 WARN("Implausible number of files supposedly in simulation set: %d\n",files_expected);
-                ERROR("Probably corrupt header in first file. Dying.\n");
+                return;
         }
         //Put the information from the first file in
         file_maps.push_back(first_map);
@@ -186,7 +193,8 @@ namespace GadgetReader{
                 WARN("Corrupt header record in file %s.\n",file);
                 WARN("Record length is: %u and ended as %u\n",head[0],head[3]);
                 WARN("Header bytes are: %s %u\n",(char *) head[1],head[2]);
-                ERROR("Maybe trying to read old-format file as new-format?\n");
+                WARN("Maybe trying to read old-format file as new-format?\n");
+                return 0;
         }
         strncpy(name,(char *)&head[1],4);
         //Null-terminate the string
@@ -245,7 +253,7 @@ namespace GadgetReader{
   bool GSnap::check_headers(gadget_header head1, gadget_header head2)
   {
     /*Check single quantities*/
-    /*Even the floats ought to be really identical*/
+    /*Even the floats ought to be really identical if we have read them from disc*/
     if(head1.time != head2.time ||
        head1.redshift!= head2.redshift ||
        head1.flag_sfr != head2.flag_sfr ||
@@ -274,7 +282,7 @@ namespace GadgetReader{
   int64_t GSnap::GetNpart(int type)
   {
           int64_t npart=0;
-          if(type >= N_TYPE || type < 0) 
+          if(type >= N_TYPE || type < 0 || file_maps.size() == 0) 
                   return 0;
           //Get the part that doesn't fit in 32 bits, if it isn't bogus
           if(!bad_head64)
@@ -337,7 +345,7 @@ namespace GadgetReader{
    *        Only skip types for which the block is actually present:
    *        Unfortunately there is no way of the library knowing which particle has which type, so 
    *        there is no way of telling that in advance.  */
-  int64_t GSnap::GetBlock(std::string BlockName, char *block, int64_t npart_toread, int64_t start_part, int skip_type)
+  int64_t GSnap::GetBlock(std::string BlockName, void *block, int64_t npart_toread, int64_t start_part, int skip_type)
   {
         int64_t npart_read=0;
         //Check the block really exists
@@ -362,9 +370,6 @@ namespace GadgetReader{
                 for(int j=0; j<N_TYPE;j++)
                         if(skip_type & (1 << j))
                                 npart_file-=file_maps[i].header.npart[j];
-                //There is also a maximum amount of particles we want to read. If we have reached it, truncate.
-                if(npart_file > npart_toread-npart_read)
-                       npart_file=npart_toread-npart_read;
                 //So now we have the amount of data to read, and we want to find the starting position 
                 start_pos=cur_block.start_pos;
                 //Don't want to read the skip_types before the start of our first type.
@@ -385,6 +390,10 @@ namespace GadgetReader{
                         start_pos+=start_part*cur_block.partlen;
                         npart_file-=start_part;
                 }
+                //There is a maximum amount of particles we want to read. 
+                //If we have reached it, truncate.
+                if(npart_file > npart_toread-npart_read)
+                       npart_file=npart_toread-npart_read;
                                 
                 //Open file: If this fails skip to the next file.
                 if(!(fd=fopen(file_maps[i].name.c_str(),"r"))){
@@ -395,7 +404,7 @@ namespace GadgetReader{
                 if(fseek(fd,start_pos,SEEK_SET) == -1)
                         WARN("Failed to seek\n");
                 //Read the data!
-                read_data=fread(block+npart_read*cur_block.partlen,cur_block.partlen,npart_file,fd);
+                read_data=fread(((char *)block)+npart_read*cur_block.partlen,cur_block.partlen,npart_file,fd);
                 //Don't die if we read the wrong amount of data; maybe we can find it in the next file.
                 if(read_data !=npart_file)
                         WARN("Only read %u particles of %u from file %d\n",read_data,npart_file,i);
@@ -410,6 +419,14 @@ namespace GadgetReader{
 
 /* Return a header*/
 gadget_header GSnap::GetHeader(){
+        if(!file_maps.size()){
+                gadget_header head;
+                head.num_files=-1;
+                head.npart[0]=0;
+                head.npart[1]=0;
+                return head;
+        }
         return file_maps[0].header;
 }
+
 }

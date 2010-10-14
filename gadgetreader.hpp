@@ -72,11 +72,11 @@ namespace GadgetReader{
   //Class for reading Gadget snapshots. 
   class GSnap{
           public:
-                  /*Constuctor: does most of the hard work of looking over the file.
+                  /*Constructor: does most of the hard work of looking over the file.
                    * Will seek through the file, reading the header and building a map of where the 
                    * data blocks are.*/
                   //TODO: Find a better way to work out partlen than simply hardcoding 4 or 12.
-                  GSnap(std::string snap_filename);
+                  GSnap(std::string snap_filename,bool debugf=true);
                   
                   /* Reads particles from a file block into the memory pointed to by block
                    * Returns the number of particles read.
@@ -85,17 +85,30 @@ namespace GadgetReader{
                    *        pointer to allocated memory for block
                    *        particles to skip initially
                    *        Types to skip, as a bitfield. 
-                   *        Pass 1 to skip baryons, 3 to skip baryons and dm, 2 to skip dm, etc.
+                   *        Pass 1 to skip baryons, 2 to skip dm, 3 to skip baryons and dm, etc.
                    *        Only skip types for which the block is actually present:
-                   *        Unfortunately there is no way of the library knowing which particle has which type,
+                   *        Unfortunately there is no way of the library knowing
+                   *        which particle has which type,
                    *        so there is no way of telling that in advance.  */
-                  int64_t GetBlock(std::string BlockName, char *block, int64_t npart_toread, int64_t start_part, int skip_type);
+                  int64_t GetBlock(std::string BlockName, void *block, int64_t npart_toread, int64_t start_part, int skip_type);
                   //Tests whether a particular block exists
                   bool IsBlock(std::string BlockName);
                   //Gets a file header from the first file.
                   //Note this means GetHeader().Npart[0] != GetNpart(0)
                   //This has to be the case to avoid overflow issues.
                   gadget_header GetHeader();
+                  //Get the filename we put in
+                  std::string GetFileName(){
+                          return base_filename;
+                  }
+                  //Get the number of files we found in the snapshot
+                  int GetNumFiles(){
+                          return file_maps.size();
+                  }
+                  //Get the file format: first bit is format 2, second is swap_endian
+                  int GetFormat(){
+                          return swap_endian*2+(!format_2);
+                  }
                   //Convenience function to get the total number of particles easily for a type
                   //Note when calculating total header, to add npart, not to use npart total, 
                   //in case we have more than 2**32 particles.
@@ -106,14 +119,13 @@ namespace GadgetReader{
                   int64_t GetBlockParts(std::string BlockName);
                   //Get a list of all blocks present in the snapshot.
                   std::set<std::string> GetBlocks();
+                  bool debug;
           private:
-                  //Construct a map of where the blocks start and finish for a single file
-                  file_map construct_file_map(FILE *file,f_name filename); 
                   //Function to check the headers of different files are 
                   //consistent with each other.
                   bool check_headers(gadget_header head1, gadget_header head2);
-                  //Turn a type and a particle offset into a file and starting particle.
-                  int64_t find_start_position(int Type,int64_t start_part, f_name *file);
+                  //Construct a map of where the blocks start and finish for a single file
+                  file_map construct_file_map(FILE *file,f_name filename); 
                   /*Sets swap_endian and format_2. 
                    * Returns 0 for success, 1 for an empty file, and 2 
                    * if the filetype is weird (eg, if you tried to open a text file by mistake)*/

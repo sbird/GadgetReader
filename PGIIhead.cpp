@@ -24,6 +24,10 @@ int main(int argc, char* argv[]){
      
      string filename(argv[1]);
      GSnap snap(filename);
+     if(snap.GetNumFiles() < 1){
+             cout<<"Unable to load file. Probably does not exist"<<endl;
+             return 0;
+     }
      head=snap.GetHeader();
      for(i=0; i<6; i++)
             tot_mass+=head.mass[i]; 
