@@ -1,0 +1,29 @@
+N_part = 1994 2050 0 0 39 0
+Mass = 0.000000 0.040616 0.000000 0.000000 0.000000 0.000000
+Time = 0.277778
+Redshift = 2.6
+Star formation is: 1
+Feedback is: 1
+Total N_part = 4039 4096 0 0 57 0
+Cooling is: 1
+Numfiles = 2
+Boxsize = 3.000000e+03
+Omega_0 = 0.2669
+Omega_L = 0.7331
+H0 = 0.71
+Stellar age is: 0
+Metals: 0
+Non-head blocks found:
+HSML with 4039 particles, in 16156 bytes.
+ID   with 8192 particles, in 32768 bytes.
+MASS with 4096 particles, in 16384 bytes.
+NH   with 4039 particles, in 16156 bytes.
+NHE  with 4039 particles, in 16156 bytes.
+NHEP with 4039 particles, in 16156 bytes.
+NHEQ with 4039 particles, in 16156 bytes.
+NHP  with 4039 particles, in 16156 bytes.
+POS  with 8192 particles, in 98304 bytes.
+RHO  with 4039 particles, in 16156 bytes.
+SFR  with 4039 particles, in 16156 bytes.
+U    with 4039 particles, in 16156 bytes.
+VEL  with 8192 particles, in 98304 bytes.

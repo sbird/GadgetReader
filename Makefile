@@ -1,33 +1,35 @@
 
-CC = icc -vec_report0
-# CC= gcc
-CFLAGS = -w2 -O2  -g -fPIC
-# CFLAGS = -Wall -O2  -g -fPIC
+# CC = icc -vec_report0
+CC= gcc
+# CFLAGS = -w2 -O2  -g -fPIC
+CFLAGS = -Wall -O2  -g -fPIC
 CXXFLAGS = $(CFLAGS)
-CXX = icpc
-# CXX = g++
+# CXX = icpc
+CXX = g++
 OPTS = 
 PG = 
 CFLAGS += $(OPTS)
-COM_INC = parameters.h Makefile
-LINK=$(CC)
 obj=gadgetreader.o read_utils.o
 head=read_utils.h gadgetreader.hpp
 
-.PHONY: all clean
+.PHONY: all clean test
 
 all: libgadread.so
 
 libgadread.so: $(obj)
-	$(CC) -shared -Wl,-soname,libgadread.so -o libgadread.so   *.o
+	$(CC) -shared -Wl,-soname,$@ -o $@  $(obj)
 gadgetreader.o: gadgetreader.cpp $(head) read_utils.o
 read_utils.o: read_utils.c read_utils.h
-test: PGIIhead libgadread.so btest
+test: PGIIhead btest 
+	@./btest
+	@./PGIIhead test_g2_snap 1 > PGIIhead_out.test 2>/dev/null
+	@echo "Errors in PGIIhead output:"
+	@diff PGIIhead_out.test PGIIhead_out.txt
 PGIIhead: PGIIhead.cpp libgadread.so
 btest: btest.cpp libgadread.so
-	$(CC) $(CFLAGS) btest.cpp -lboost_unit_test_framework -lgadread -L. -o btest
+	$(CC) $(CFLAGS) $< -lboost_unit_test_framework -lgadread -L. -o $@
 
 clean: 
-	rm $(obj) 
+	rm $(obj) PGIIhead btest
 
 
