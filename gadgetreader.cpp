@@ -20,7 +20,11 @@ namespace GadgetReader{
 
 /*Error output macros*/
 #define ERROR(...) do{ fprintf(stderr,__VA_ARGS__);abort();}while(0)
-#define WARN(...) do{ if(debug) fprintf(stderr, __VA_ARGS__);}while(0)
+#define WARN(...) do{ \
+        if(debug){ \
+                fprintf(stderr,"[GadgetReader]: "); \
+                fprintf(stderr, __VA_ARGS__); \
+        }}while(0)
   //Constructor; this does almost all the hard work of building a "map" of the block positions
   GSnap::GSnap(std::string snap_filename, bool debugf)
   {

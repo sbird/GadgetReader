@@ -23,7 +23,7 @@
 using namespace GadgetReader;
 
 #define FLOATS_NEAR_TO(x,y) \
-        BOOST_CHECK_MESSAGE( fabs((x) - (y)) <= std::max(fabs(x),fabs(y))/1e-6,(x)<<" is not close to "<<(y))
+        BOOST_CHECK_MESSAGE( fabs((x) - (y)) <= std::max(fabs(x),fabs(y))/1e6,(x)<<" is not close to "<<(y))
 //Check the gadget header has the right size
 BOOST_AUTO_TEST_CASE(header_size)
 {
