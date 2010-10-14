@@ -1,2 +1,7 @@
 *.o
 .*.swp
+PGIIhead
+btest
+PGIIhead_out.test
+tags
+libgadread.so*
