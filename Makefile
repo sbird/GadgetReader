@@ -12,7 +12,7 @@ CFLAGS += $(OPTS)
 obj=gadgetreader.o read_utils.o
 head=read_utils.h gadgetreader.hpp
 
-.PHONY: all clean test
+.PHONY: all clean test dist
 
 all: libgadread.so
 
@@ -32,4 +32,5 @@ btest: btest.cpp libgadread.so
 clean: 
 	rm $(obj) PGIIhead btest
 
-
+dist:
+	tar -czf GadgetReader.tar.gz Makefile $(head) *.cpp *.c test_g2_snap.*
