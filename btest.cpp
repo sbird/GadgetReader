@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(header_correct)
         //Set up the test header
         gadget_header head=snap.GetHeader();
         uint32_t npart[N_TYPE]= {1994, 2050, 0, 0, 39, 0};
-        double mass[N_TYPE] = {0.000000, 0.040616, 0.000000, 0.000000, 0.000000, 0.000000};
+        double mass[N_TYPE] = {0.000000, 0.0406161, 0.000000, 0.000000, 0.000000, 0.000000};
         int32_t npartTotal[N_TYPE]= {4039, 4096, 0, 0, 57, 0};
         for(int i=0; i<N_TYPE;i++){
                 BOOST_CHECK_EQUAL(npart[i], head.npart[i]);
