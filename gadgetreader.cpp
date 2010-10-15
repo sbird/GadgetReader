@@ -26,7 +26,7 @@ namespace GadgetReader{
                 fprintf(stderr, __VA_ARGS__); \
         }}while(0)
   //Constructor; this does almost all the hard work of building a "map" of the block positions
-  GSnap::GSnap(std::string snap_filename, bool debugf)
+  GSnap::GSnap(std::string snap_filename, bool debugf, std::vector<std::string> *BlockNames)
   {
         file_map first_map;
         f_name first_file=snap_filename;
@@ -48,7 +48,7 @@ namespace GadgetReader{
                 }
         }
         //Read the first file
-        first_map= construct_file_map(fd,first_file);
+        first_map= construct_file_map(fd,first_file,BlockNames);
         //Set the global variables. 
         base_filename=first_file;
         //Take the ".0" from the end if needed.
@@ -79,7 +79,7 @@ namespace GadgetReader{
                         WARN("Could not open file %d of %d (%s)\n",i+1,files_expected,c_name.c_str());
                         continue;
                 }
-                tmp_map=construct_file_map(fd,c_name);
+                tmp_map=construct_file_map(fd,c_name,BlockNames);
                 fclose(fd);
                 if(!check_headers(tmp_map.header,file_maps[0].header)){
                         WARN("Headers inconsistent between file 0 and file %d, ignoring file %d\n",i,i);
@@ -105,12 +105,13 @@ namespace GadgetReader{
 
   //This takes an open file and constructs a map of where the blocks are within it, and then returns said map.
   //It ought to support endian swapped files as well as Gadget-I files.
-  file_map GSnap::construct_file_map(FILE *fd,const f_name strfile)
+  file_map GSnap::construct_file_map(FILE *fd,const f_name strfile, std::vector<std::string>* BlockNames)
   {
+          #define N_BLOCKS 12
           file_map c_map;
           //Default ordering of blocks for Gadget-I files
-          const char *default_blocks[12]={"HEAD","POS ","VEL ","ID  ","MASS","U   ","RHO ","NE  ","NH  ","NHE ","HSML","SFR "};
-          const char** b_ptr=default_blocks;
+          const char *default_blocks[N_BLOCKS]={"HEAD","POS ","VEL ","ID  ","MASS","U   ","RHO ","NE  ","NH  ","NHE ","HSML","SFR "};
+          unsigned int cur_block=0;
           uint32_t record_size;
           c_map.name=strfile;
           //Set a default "bad" value for the return
@@ -119,7 +120,7 @@ namespace GadgetReader{
           //Read now until we run out of file
           while(!feof(fd)){
                   block_info c_info;
-                  char c_name[5]={'\0'};
+                  char c_name[5]={"    "};
                   //Read another block header
                   if(format_2){
                      c_info.length=read_G2_block_head(c_name,fd,file);
@@ -137,10 +138,17 @@ namespace GadgetReader{
                      }
                   }
                   else{
-                    //For Gadget-I files, we have to settle for less certainty, 
-                    //and read the name from a pre-guessed table
-                    //and the length from the record length.
-                    strncpy(c_name, *(b_ptr++),5);
+                    /*For Gadget-I files, we have to settle for less certainty, 
+                     * and read the name from a pre-guessed table, 
+                     * or a user-supplied input table,
+                     * or just make something up if all else fails.*/
+                    if(BlockNames == NULL && cur_block< N_BLOCKS)
+                                    strncpy(c_name, default_blocks[cur_block++],5);
+                    else if(BlockNames != NULL && cur_block< (*BlockNames).size())
+                            strncpy(c_name, (*BlockNames)[cur_block++].c_str(),5);
+                    else
+                            c_name[0]=(char) 65-N_BLOCKS+cur_block;
+                    /* Read the length from the record length*/
                     if(fread(&c_info.length,sizeof(int32_t),1,fd)!=1)
                             break;//out of file
                     if(swap_endian) endian_swap(&c_info.length);
@@ -296,11 +304,16 @@ namespace GadgetReader{
   }
 
   /* Gets the total number of particles in a simulation. */
-  int64_t GSnap::GetNpart(int type)
+  int64_t GSnap::GetNpart(int type, bool found)
   {
           int64_t npart=0;
           if(type >= N_TYPE || type < 0 || file_maps.size() == 0) 
                   return 0;
+          if(found){
+                  for(unsigned int i=0; i<file_maps.size(); i++)
+                          npart+=file_maps[i].header.npart[type];
+                  return npart;
+          }
           //Get the part that doesn't fit in 32 bits, if it isn't bogus
           if(!bad_head64)
                   npart=file_maps[0].header.NallHW[type];
@@ -434,16 +447,26 @@ namespace GadgetReader{
         return npart_read;
   }
 
-/* Return a header*/
-gadget_header GSnap::GetHeader(){
-        if(!file_maps.size()){
+  /* Return a header*/
+  gadget_header GSnap::GetHeader(int i)
+  {
+        if((int)file_maps.size()<= i){
                 gadget_header head;
                 head.num_files=-1;
                 head.npart[0]=0;
                 head.npart[1]=0;
                 return head;
         }
-        return file_maps[0].header;
-}
+        return file_maps[i].header;
+  }
 
+  /*Set the length per particle*/
+  void GSnap::SetPartLen(std::string BlockName, short partlen)
+  {
+          for(unsigned int i=0; i<file_maps.size();i++){
+                  if(file_maps[i].blocks.count(BlockName))
+                          file_maps[i].blocks[BlockName].partlen=partlen;
+          }
+          return;
+  }
 }

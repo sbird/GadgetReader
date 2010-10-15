@@ -87,10 +87,13 @@ namespace GadgetReader{
           public:
                   /*Constructor: does most of the hard work of looking over the file.
                    * Will seek through the file, reading the header and building a map of where the 
-                   * data blocks are.*/
-                  //TODO: Find a better way to work out partlen than simply hardcoding 4 or 12.
-                  GSnap(std::string snap_filename,bool debugf=true);
-                  
+                   * data blocks are.
+                   * Partlen is hardcoded to be 12 for POS and VEL and 4 otherwise. 
+                   * A better detection method would be nice. 
+                   * The first argument is the (base) filename, the second controls whether WARN prints anything
+                   * and the third is a list of block headers for format 1 files. 
+                   * If not set, will use the default hard-coded values. */
+                  GSnap(std::string snap_filename, bool debugf=true, std::vector<std::string> *BlockNames=NULL);
                   /* Reads particles from a file block into the memory pointed to by block
                    * Returns the number of particles read.
                    * Takes: block name, 
@@ -106,10 +109,10 @@ namespace GadgetReader{
                   int64_t GetBlock(std::string BlockName, void *block, int64_t npart_toread, int64_t start_part, int skip_type);
                   //Tests whether a particular block exists
                   bool IsBlock(std::string BlockName);
-                  //Gets a file header from the first file.
+                  //Gets a file header
                   //Note this means GetHeader().Npart[0] != GetNpart(0)
                   //This has to be the case to avoid overflow issues.
-                  gadget_header GetHeader();
+                  gadget_header GetHeader(int i=0);
                   //Get the filename we put in
                   std::string GetFileName(){
                           return base_filename;
@@ -122,23 +125,27 @@ namespace GadgetReader{
                   int GetFormat(){
                           return swap_endian*2+(!format_2);
                   }
-                  //Convenience function to get the total number of particles easily for a type
-                  //Note when calculating total header, to add npart, not to use npart total, 
-                  //in case we have more than 2**32 particles.
-                  int64_t GetNpart(int type);
+                  /*Convenience function to get the total number of particles easily for a type
+                   * Note when calculating total header, to add npart, not to use npart total, 
+                   * in case we have more than 2**32 particles.
+                   * First argument is particle type, second, if true will return the 
+                   * particles actually found instead of those the snapshot is reporting to exist*/
+                  int64_t GetNpart(int type, bool found=false);
                   //Get total size of a block in the snapshot, in bytes.
                   int64_t GetBlockSize(std::string BlockName);
                   //Get number of particles a block has data for
                   int64_t GetBlockParts(std::string BlockName);
                   //Get a list of all blocks present in the snapshot.
                   std::set<std::string> GetBlocks();
-                  bool debug;
+                  /*Set the per-particle length for a given block to partlen.
+                   * This could be useful if the automatic detection failed.*/
+                  void SetPartLen(std::string BlockName, short partlen);
           private:
                   //Function to check the headers of different files are 
                   //consistent with each other.
                   bool check_headers(gadget_header head1, gadget_header head2);
                   //Construct a map of where the blocks start and finish for a single file
-                  file_map construct_file_map(FILE *file,f_name filename); 
+                  file_map construct_file_map(FILE *file,f_name filename, std::vector<std::string> *BlockNames); 
                   /*Sets swap_endian and format_2. 
                    * Returns 0 for success, 1 for an empty file, and 2 
                    * if the filetype is weird (eg, if you tried to open a text file by mistake)*/
@@ -153,6 +160,8 @@ namespace GadgetReader{
                   bool bad_head64; //This flag indicates that the header is setting 
                                   //the 64 bit part of nparttotal incorrectly
                   std::vector<file_map> file_maps; //Pointer to the file data
+                  /*Does WARN print anything?*/
+                  bool debug;
   };
 
 }
