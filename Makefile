@@ -11,8 +11,11 @@ PG =
 CFLAGS += $(OPTS)
 obj=gadgetreader.o read_utils.o
 head=read_utils.h gadgetreader.hpp
+#Include directories for python and perl
+PYINC=/usr/include/python2.6
+PERLINC=/usr/lib/perl5/core_perl/CORE
 
-.PHONY: all clean test dist
+.PHONY: all clean test dist pybind bind
 
 all: libgadread.so
 
@@ -34,3 +37,19 @@ clean:
 
 dist:
 	tar -czf GadgetReader.tar.gz Makefile $(head) *.cpp *.c test_g2_snap.*
+
+bind: pybind
+
+python:
+	mkdir python
+perl:
+	mkdir perl
+
+pybind: gadgetreader.i libgadread.so python
+	swig -Wall -python -c++ -o python/gadgetreader_python.cxx $< 
+	$(CXX) ${CXXFLAGS} -I${PYINC} -shared -Wl,-soname,_gadgetreader.so -L. -lgadread python/gadgetreader_python.cxx -o python/_gadgetreader.so 
+
+#WARNING: Not as functional as python bindings
+perlbind: gadgetreader.i libgadread.so perl 
+	swig -Wall -perl -c++ -o perl/gadgetreader_perl.cxx $< 
+	$(CXX) ${CXXFLAGS} -I${PERLINC} -shared -Wl,-soname,_gadgetreader.so -L. -lgadread perl/gadgetreader_perl.cxx -o perl/_gadgetreader.so 

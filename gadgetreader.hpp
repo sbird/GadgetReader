@@ -21,7 +21,6 @@
 #include <vector>
 #include <string>
 #include <stdint.h>
-#include <stdlib.h>
 
 /*Define the particle types*/
 #define BARYON_TYPE 0 
@@ -58,7 +57,9 @@ namespace GadgetReader{
     int32_t  flag_entr_ics;
     char     fill[256- N_TYPE*sizeof(uint32_t)- (6+N_TYPE)*sizeof(double)- (7+2*N_TYPE)*sizeof(int32_t)];  /* fills to 256 Bytes */
   } gadget_header;
-  
+ 
+  //Things that we don't want wrapped
+#ifndef SWIG 
   //Filename type
   typedef std::string f_name;
   
@@ -81,6 +82,7 @@ namespace GadgetReader{
     std::map<std::string,block_info> blocks;
   } file_map;
     
+#endif
   
   //Class for reading Gadget snapshots. 
   class GSnap{
@@ -106,7 +108,21 @@ namespace GadgetReader{
                    *        Unfortunately there is no way of the library knowing
                    *        which particle has which type,
                    *        so there is no way of telling that in advance.  */
+                  /*This function is also insanity with respect to bindings, for 
+                   * reasons which probably have to do with the total lack of memory or type safety.
+                   * Therefore don't bind it and provide wrapper functions. */
+                #ifndef SWIG
                   int64_t GetBlock(std::string BlockName, void *block, int64_t npart_toread, int64_t start_part, int skip_type);
+                #endif
+                  /* Memory-safe wrapper functions for the bindings. It is not anticipated that people writing codes in C 
+                   * will want to use these, as they need to allocate a significant quantity of temporary memory.
+                   * We do not attempt to work out whether the block requested is a float or an int.*/
+                  std::vector<float> GetBlock(std::string BlockName, int64_t npart_toread, int64_t start_part, int skip_type);
+                  /* Support getting IDs: is exactly the same as the above*/
+                  std::vector<int> GetBlockInt(std::string BlockName, int64_t npart_toread, int64_t start_part, int skip_type);
+                  /* Ideally here we would have a wrapper for returning 3-float blocks such as POS and VEL, 
+                   * BUT SWIG can't handle nested classes, so we can't do that.*/
+
                   //Tests whether a particular block exists
                   bool IsBlock(std::string BlockName);
                   //Gets a file header
@@ -140,6 +156,10 @@ namespace GadgetReader{
                   /*Set the per-particle length for a given block to partlen.
                    * This could be useful if the automatic detection failed.*/
                   void SetPartLen(std::string BlockName, short partlen);
+                  /*These functions have no purpose except to help the bindings*/
+/*                  int64_t GetBlock(std::string BlockName, float *block, int64_t npart_toread, int64_t start_part, int skip_type){
+                          return GetBlock(BlockName, block, npart_toread/sizeof(float),start_part,skip_type);
+                  }*/
           private:
                   //Function to check the headers of different files are 
                   //consistent with each other.

@@ -15,6 +15,7 @@
 #include "read_utils.h"
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 namespace GadgetReader{
 
@@ -469,4 +470,82 @@ namespace GadgetReader{
           }
           return;
   }
+  
+  #define MIN_READ_SPLIT 6000
+  /*Memory-safe wrapper functions for the bindings. It is not anticipated that people writing codes in C 
+   * will want to use these, as they need to allocate a significant quantity of temporary memory.
+   * We do not attempt to work out whether the block requested is a float or an int.*/
+  std::vector<float> GSnap::GetBlock(std::string BlockName, int64_t npart_toread, int64_t start_part, int skip_type)
+  {
+          std::vector<float> data;
+          float* block=NULL;
+          int64_t read_chunk, total_read=0, read;
+          short partlen;
+          if(!IsBlock(BlockName))
+                  return data;
+          partlen=file_maps[0].blocks[BlockName].partlen;
+          /*If it is a small amount of data, read it all at once*/
+          if(npart_toread < MIN_READ_SPLIT)
+                  read_chunk=npart_toread;
+          else
+          /*Read a third of the data at a time.*/
+                  read_chunk=npart_toread/3+1;
+          /*Allocate memory*/
+          if(!(block=(float *)malloc(read_chunk*partlen))){
+                  WARN("Could not allocate temporary memory for particles!\n");
+                  return data;
+          }
+          /*Read a segment*/
+          while(total_read < npart_toread){
+                  /*For final segment to avoid off-by-one error*/
+                  if(read_chunk > npart_toread-total_read)
+                          read_chunk=npart_toread-total_read;
+                  read= GetBlock(BlockName, block, read_chunk, start_part+total_read, skip_type);
+                  /*Assume we read all of them; otherwise if one day we fail to read, 
+                   * the loop will not stop*/
+                  total_read+=read_chunk;
+                  /*Append what we have to the vector*/
+                  for(uint64_t i=0; i< read*partlen/sizeof(float); i++)
+                          data.push_back(block[i]);
+          }
+          return data;
+  }
+
+  /*Support getting IDs: is exactly the same as the above*/
+  std::vector<int> GSnap::GetBlockInt(std::string BlockName, int64_t npart_toread, int64_t start_part, int skip_type)
+  {
+          std::vector<int> data;
+          int* block=NULL;
+          int64_t read_chunk, total_read=0, read;
+          short partlen;
+          if(!IsBlock(BlockName))
+                  return data;
+          partlen=file_maps[0].blocks[BlockName].partlen;
+          /*If it is a small amount of data, read it all at once*/
+          if(npart_toread < MIN_READ_SPLIT)
+                  read_chunk=npart_toread;
+          else
+          /*Read a third of the data at a time.*/
+                  read_chunk=npart_toread/3+1;
+          /*Allocate memory*/
+          if(!(block=(int *)malloc(read_chunk*partlen))){
+                  WARN("Could not allocate temporary memory for particles!\n");
+                  return data;
+          }
+          /*Read a segment*/
+          while(total_read < npart_toread){
+                  /*For final segment to avoid off-by-one error*/
+                  if(read_chunk > npart_toread-total_read)
+                          read_chunk=npart_toread-total_read;
+                  read= GetBlock(BlockName, block, read_chunk, start_part+total_read, skip_type);
+                  /*Assume we read all of them; otherwise if one day we fail to read, 
+                   * the loop will not stop*/
+                  total_read+=read_chunk;
+                  /*Append what we have to the vector*/
+                  for(uint64_t i=0; i< read*partlen/sizeof(float); i++)
+                          data.push_back(block[i]);
+          }
+          return data;
+  }
+
 }
