@@ -6,3 +6,6 @@ PGIIhead_out.test
 tags
 libgadread.so*
 GadgetReader.tar.gz
+perl/*
+python/*
+
