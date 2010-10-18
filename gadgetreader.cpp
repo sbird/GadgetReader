@@ -508,6 +508,7 @@ namespace GadgetReader{
                   for(uint64_t i=0; i< read*partlen/sizeof(float); i++)
                           data.push_back(block[i]);
           }
+          free(block);
           return data;
   }
 
@@ -545,6 +546,7 @@ namespace GadgetReader{
                   for(uint64_t i=0; i< read*partlen/sizeof(float); i++)
                           data.push_back(block[i]);
           }
+          free(block);
           return data;
   }
 
