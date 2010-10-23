@@ -6,14 +6,14 @@ CFLAGS = -Wall -O2  -g -fPIC
 CXXFLAGS = $(CFLAGS)
 # CXX = icpc
 CXX = g++
-LDFLAGS=-Wl,-rpath,. -L. -lrgad
+LDFLAGS=-Wl,-rpath,${CURDIR} -L${CURDIR} -lrgad
 OPTS = 
 PG = 
 CFLAGS += $(OPTS)
 obj=gadgetreader.o read_utils.o
 head=read_utils.h gadgetreader.hpp
 #Include directories for python and perl
-PYINC=/usr/include/python2.6
+PYINC=/usr/include/python2.7
 PERLINC=/usr/lib/perl5/core_perl/CORE
 
 .PHONY: all clean test dist pybind bind
@@ -49,11 +49,19 @@ python:
 perl:
 	mkdir perl
 
-pybind: gadgetreader.i librgad.so python
-	swig -Wall -python -c++ -o python/gadgetreader_python.cxx $< 
-	$(CXX) ${CXXFLAGS} -I${PYINC} -shared -Wl,-soname,_gadgetreader.so -L. -lgadread python/gadgetreader_python.cxx -o python/_gadgetreader.so 
+python/rgad_python.cxx: gadgetreader.i python
+	swig -Wall -python -c++ -o $@ $<
+
+python/_gadgetreader.so: python/rgad_python.cxx librgad.so python
+	$(CXX) ${CXXFLAGS} -I${PYINC} -shared -Wl,-soname,_gadgetreader.so ${LDFLAGS} $< -o $@
+
+pybind: python/_gadgetreader.so
 
 #WARNING: Not as functional as python bindings
-perlbind: gadgetreader.i librgad.so perl 
-	swig -Wall -perl -c++ -o perl/gadgetreader_perl.cxx $< 
-	$(CXX) ${CXXFLAGS} -I${PERLINC} -shared -Wl,-soname,_gadgetreader.so -L. -lgadread perl/gadgetreader_perl.cxx -o perl/_gadgetreader.so 
+perl/rgad_perl.cxx: gadgetreader.i perl
+	swig -Wall -perl -c++ -o $@ $<
+
+perl/_gadgetreader.so: perl/rgad_perl.cxx librgad.so perl
+	$(CXX) ${CXXFLAGS} -I${PERLINC} -shared -Wl,-soname,_gadgetreader.so ${LDFLAGS} $< -o $@
+
+perlbind: perl/_gadgetreader.so
