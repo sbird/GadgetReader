@@ -43,7 +43,7 @@ namespace std{
 %array_class(int,IntArr);
 %array_class(double,DoubArr);*/
 
-
+%feature("autodoc","1");
 %include "gadgetreader.hpp"
 
 /* Methods to access the arrays in gadget_header, which SWIG can't wrap properly*/

@@ -6,34 +6,44 @@ CFLAGS = -Wall -O2  -g -fPIC
 CXXFLAGS = $(CFLAGS)
 # CXX = icpc
 CXX = g++
+LDFLAGS=-Wl,-rpath,${CURDIR} -L${CURDIR} -lrgad
 OPTS = 
 PG = 
 CFLAGS += $(OPTS)
 obj=gadgetreader.o read_utils.o
 head=read_utils.h gadgetreader.hpp
-#Include directories for python and perl
-PYINC=/usr/include/python2.6
-PERLINC=/usr/lib/perl5/core_perl/CORE
+#Include directories for python and perl.
+PYINC:=$(shell python-config --includes)
+#Check python-config isn't a python 3 version: 
+ifeq (python3,$(findstring python3,${PYINC}))
+	PYINC:=$(shell python2-config --includes)
+endif
+PERLINC=-I/usr/lib/perl5/core_perl/CORE
 
 .PHONY: all clean test dist pybind bind
 
-all: libgadread.so
+all: librgad.so
 
-libgadread.so: $(obj)
+librgad.so: librgad.so.1
+	ln -sf $< $@
+
+librgad.so.1: $(obj)
 	$(CC) -shared -Wl,-soname,$@ -o $@  $(obj)
 gadgetreader.o: gadgetreader.cpp $(head) read_utils.o
 read_utils.o: read_utils.c read_utils.h
 test: PGIIhead btest 
 	@./btest
 	@./PGIIhead test_g2_snap 1 > PGIIhead_out.test 2>/dev/null
-	@echo "Errors in PGIIhead output:"
+	@echo "Any errors in PGIIhead output will be printed below:"
 	@diff PGIIhead_out.test PGIIhead_out.txt
-PGIIhead: PGIIhead.cpp libgadread.so
-btest: btest.cpp libgadread.so
-	$(CC) $(CFLAGS) $< -lboost_unit_test_framework -lgadread -L. -o $@
+PGIIhead: PGIIhead.cpp librgad.so
+btest: btest.cpp librgad.so
+	$(CC) $(CFLAGS) $< -lboost_unit_test_framework ${LDFLAGS} -o $@
 
 clean: 
-	rm $(obj) PGIIhead btest
+	-rm -f $(obj) PGIIhead btest librgad.so librgad.so.1
+cleanall: clean
+	-rm -Rf python perl doc
 
 dist:
 	tar -czf GadgetReader.tar.gz Makefile $(head) *.cpp *.c test_g2_snap.*
@@ -45,11 +55,19 @@ python:
 perl:
 	mkdir perl
 
-pybind: gadgetreader.i libgadread.so python
-	swig -Wall -python -c++ -o python/gadgetreader_python.cxx $< 
-	$(CXX) ${CXXFLAGS} -I${PYINC} -shared -Wl,-soname,_gadgetreader.so -L. -lgadread python/gadgetreader_python.cxx -o python/_gadgetreader.so 
+python/rgad_python.cxx: gadgetreader.i python
+	swig -Wall -python -c++ -o $@ $<
+
+python/_gadgetreader.so: python/rgad_python.cxx librgad.so python
+	$(CXX) ${CXXFLAGS} ${PYINC} -shared -Wl,-soname,_gadgetreader.so ${LDFLAGS} $< -o $@
+
+pybind: python/_gadgetreader.so
 
 #WARNING: Not as functional as python bindings
-perlbind: gadgetreader.i libgadread.so perl 
-	swig -Wall -perl -c++ -o perl/gadgetreader_perl.cxx $< 
-	$(CXX) ${CXXFLAGS} -I${PERLINC} -shared -Wl,-soname,_gadgetreader.so -L. -lgadread perl/gadgetreader_perl.cxx -o perl/_gadgetreader.so 
+perl/rgad_perl.cxx: gadgetreader.i perl
+	swig -Wall -perl -c++ -o $@ $<
+
+perl/_gadgetreader.so: perl/rgad_perl.cxx librgad.so perl
+	$(CXX) ${CXXFLAGS} ${PERLINC} -shared -Wl,-soname,_gadgetreader.so ${LDFLAGS} $< -o $@
+
+perlbind: perl/_gadgetreader.so
