@@ -41,7 +41,9 @@ btest: btest.cpp librgad.so
 	$(CC) $(CFLAGS) $< -lboost_unit_test_framework ${LDFLAGS} -o $@
 
 clean: 
-	rm $(obj) PGIIhead btest librgad.so librgad.so.1
+	-rm -f $(obj) PGIIhead btest librgad.so librgad.so.1
+cleanall: clean
+	-rm -Rf python perl doc
 
 dist:
 	tar -czf GadgetReader.tar.gz Makefile $(head) *.cpp *.c test_g2_snap.*
