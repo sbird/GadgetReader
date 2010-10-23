@@ -12,9 +12,13 @@ PG =
 CFLAGS += $(OPTS)
 obj=gadgetreader.o read_utils.o
 head=read_utils.h gadgetreader.hpp
-#Include directories for python and perl
-PYINC=/usr/include/python2.7
-PERLINC=/usr/lib/perl5/core_perl/CORE
+#Include directories for python and perl.
+PYINC:=$(shell python-config --includes)
+#Check python-config isn't a python 3 version: 
+ifeq (python3,$(findstring python3,${PYINC}))
+	PYINC:=$(shell python2-config --includes)
+endif
+PERLINC=-I/usr/lib/perl5/core_perl/CORE
 
 .PHONY: all clean test dist pybind bind
 
@@ -53,7 +57,7 @@ python/rgad_python.cxx: gadgetreader.i python
 	swig -Wall -python -c++ -o $@ $<
 
 python/_gadgetreader.so: python/rgad_python.cxx librgad.so python
-	$(CXX) ${CXXFLAGS} -I${PYINC} -shared -Wl,-soname,_gadgetreader.so ${LDFLAGS} $< -o $@
+	$(CXX) ${CXXFLAGS} ${PYINC} -shared -Wl,-soname,_gadgetreader.so ${LDFLAGS} $< -o $@
 
 pybind: python/_gadgetreader.so
 
@@ -62,6 +66,6 @@ perl/rgad_perl.cxx: gadgetreader.i perl
 	swig -Wall -perl -c++ -o $@ $<
 
 perl/_gadgetreader.so: perl/rgad_perl.cxx librgad.so perl
-	$(CXX) ${CXXFLAGS} -I${PERLINC} -shared -Wl,-soname,_gadgetreader.so ${LDFLAGS} $< -o $@
+	$(CXX) ${CXXFLAGS} ${PERLINC} -shared -Wl,-soname,_gadgetreader.so ${LDFLAGS} $< -o $@
 
 perlbind: perl/_gadgetreader.so
