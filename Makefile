@@ -47,6 +47,8 @@ cleanall: clean
 
 dist:
 	tar -czf GadgetReader.tar.gz Makefile $(head) *.cpp *.c test_g2_snap.*
+doc: Doxyfile gadgetreader.hpp gadgetreader.cpp
+	doxygen $<
 
 bind: pybind
 
