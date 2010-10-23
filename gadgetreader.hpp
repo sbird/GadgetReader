@@ -47,6 +47,15 @@
  * This will get you the positions of all baryons in the snapshot.
  *
  * A longer example is contained within PGIIhead.cpp; this program is also useful for printing Gadget file headers. 
+ *
+ * \section req_sec Requirements
+ * A C++ compiler with map, vector, set and stdint.h
+ *
+ * getopt for the example program
+ *
+ * Boost::Test library >= 1.34 for the test suite
+ *
+ * Swig > 1.30 for the bindings
  */
 #ifndef __GADGETREADER_H
 #define __GADGETREADER_H
