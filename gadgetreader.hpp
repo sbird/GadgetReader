@@ -16,6 +16,15 @@
 #ifndef __GADGETREADER_H
 #define __GADGETREADER_H
 
+/*Symbol table visibility stuff*/
+#if __GNUC__ >= 4
+    #define DLL_PUBLIC __attribute__ ((visibility("default")))
+    #define DLL_LOCAL  __attribute__ ((visibility("hidden")))
+#else
+    #define DLL_PUBLIC
+    #define DLL_LOCAL
+#endif
+
 #include <map>
 #include <set>
 #include <vector>
@@ -84,10 +93,10 @@ namespace GadgetReader{
     
 #endif
   
-  //Class for reading Gadget snapshots. 
-  class GSnap{
+  /** Main class for reading Gadget snapshots. */
+  class DLL_PUBLIC GSnap{
           public:
-                  /*Constructor: does most of the hard work of looking over the file.
+                  /** GSnap: Constructor: does most of the hard work of looking over the file.
                    * Will seek through the file, reading the header and building a map of where the 
                    * data blocks are.
                    * Partlen is hardcoded to be 12 for POS and VEL and 4 otherwise. 
@@ -163,15 +172,15 @@ namespace GadgetReader{
           private:
                   //Function to check the headers of different files are 
                   //consistent with each other.
-                  bool check_headers(gadget_header head1, gadget_header head2);
+                  DLL_LOCAL bool check_headers(gadget_header head1, gadget_header head2);
                   //Construct a map of where the blocks start and finish for a single file
-                  file_map construct_file_map(FILE *file,f_name filename, std::vector<std::string> *BlockNames); 
+                  DLL_LOCAL file_map construct_file_map(FILE *file,f_name filename, std::vector<std::string> *BlockNames);
                   /*Sets swap_endian and format_2. 
                    * Returns 0 for success, 1 for an empty file, and 2 
                    * if the filetype is weird (eg, if you tried to open a text file by mistake)*/
-                  int check_filetype(FILE* fd);
+                  DLL_LOCAL int check_filetype(FILE* fd);
                   /*Read the block header*/
-                  uint32_t read_G2_block_head(char* name, FILE *fd, const char * file);
+                  DLL_LOCAL uint32_t read_G2_block_head(char* name, FILE *fd, const char * file);
   
                   //Base filename for the snapshot
                   f_name base_filename;
