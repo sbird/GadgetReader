@@ -1,0 +1,30 @@
+==GadgetReader==
+
+This is GadgetReader, a library for easily reading Gadget format files. 
+
+To build the library, do:
+
+make
+
+For the test suite (requires Boost::Test 1.34), do: 
+
+make test
+
+For the doxygen-generated documentation:
+
+make doc
+
+For the bindings (requires swig > 1.30): 
+
+make bind
+
+To delete compiler output:
+
+make clean or make cleanall
+
+To build example program:
+
+make PGIIhead
+
+Further documentation may be found in the doxygen generated files in doc/html/index.html
+or in gadgetreader.hpp
