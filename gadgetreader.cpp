@@ -200,30 +200,29 @@ namespace GadgetReader{
                       c_info.partlen=sizeof(float);
                   //Store the start of the data block
                   c_info.start_pos=ftell(fd);
-                  //Skip reading the actual data
-                  fseek(fd,c_info.length,SEEK_CUR);
-                  if((fread(&record_size,sizeof(uint32_t),1,fd)!=1) || 
-                      ( !swap_endian && record_size != c_info.length) ||
-                      ( swap_endian && endian_swap(&record_size) != c_info.length)){
-                   /*One reason for this happening is that the record size would overflow an int. 
-                    * If this is true, we can't get record size from the length and we just have to guess
-                    * At least the record sizes at either end should be consistently wrong. */
-                   /* Better hope this only happens for blocks where all particles are present.*/
-                          uint64_t extra_len=total_file_part*c_info.partlen;
+                  /*Check for the case where the record size overflows an int.
+                   * If this is true, we can't get record size from the length and we just have to guess
+                   * At least the record sizes at either end should be consistently wrong. */
+                  /* Better hope this only happens for blocks where all particles are present.*/
+                  uint64_t extra_len=total_file_part*c_info.partlen;
+                  if(extra_len >= ((uint64_t)1)<<32){
                           WARN("Block %s was longer than could fit in %lu bytes.\n",c_name,sizeof(uint32_t));
                           WARN("Guessed size of %lu from header\n",extra_len);
                           /*Seek the rest of the block*/
-                          fseek(fd,extra_len-c_info.length,SEEK_CUR);
-                          /*If it still doesn't work, give up*/
-                          if((fread(&record_size,sizeof(uint32_t),1,fd)!=1) || 
-                              ( !swap_endian && record_size != c_info.length) ||
-                              ( swap_endian && endian_swap(&record_size) != c_info.length)){
-                                  WARN("Corrupt record for block %s in %s (%lu, %u)!\n",c_name,file, c_info.length, record_size);
-                                  continue;
-                          }
-                          /*Otherwise store this new block length*/
-                          c_info.length=extra_len;
+                          fseek(fd,extra_len,SEEK_CUR);
                   }
+                  else
+                          fseek(fd,c_info.length,SEEK_CUR);
+                  if((fread(&record_size,sizeof(uint32_t),1,fd)!=1) ||
+                      ( !swap_endian && record_size != c_info.length) ||
+                      ( swap_endian && endian_swap(&record_size) != c_info.length)){
+                          WARN("Corrupt record for block %s in %s (%lu, %u)!\n",c_name,file, c_info.length, record_size);
+                          WARN("Unable to read rest of file\n");
+                          return c_map;
+                  }
+                  /*Store new block length*/
+                  if(extra_len >= ((uint64_t)1)<<32)
+                        c_info.length=extra_len;
                   //Append the current info to the map.
                   c_map.blocks[std::string(c_name)] = c_info;
           }
