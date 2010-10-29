@@ -138,7 +138,7 @@ namespace GadgetReader{
  typedef struct{
     //Starting position in the file
     int64_t start_pos;
-    uint32_t length; //in bytes, excluding the two integer "record sizes" at either end
+    uint64_t length; //in bytes, excluding the two integer "record sizes" at either end
     short partlen; //length for a single particle. Likely to be 4 or 12.
   } block_info;
   
