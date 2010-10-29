@@ -44,7 +44,8 @@ namespace GadgetReader{
                 first_file+=".0";
                 //and then try again
                 if(!(fd=fopen(first_file.c_str(),"r")) || check_filetype(fd)){
-                        WARN("Could not open %s (.0)\nDoes not exist, or is corrupt.\n",snap_filename.c_str());
+                        WARN("Could not open %s (.0)\n",snap_filename.c_str());
+                        WARN("Does not exist, or is corrupt.\n");
                         return;
                 }
         }
