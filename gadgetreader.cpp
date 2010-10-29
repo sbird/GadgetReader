@@ -115,6 +115,8 @@ namespace GadgetReader{
           const char *default_blocks[N_BLOCKS]={"HEAD","POS ","VEL ","ID  ","MASS","U   ","RHO ","NE  ","NH  ","NHE ","HSML","SFR "};
           unsigned int cur_block=0;
           uint32_t record_size;
+          /*Total number of particles in file*/
+          int64_t total_file_part=0;
           c_map.name=strfile;
           //Set a default "bad" value for the return
           c_map.header.num_files=-1;
@@ -158,7 +160,7 @@ namespace GadgetReader{
                     c_info.length=record_size;
                   }
                   //Do special things for the HEAD block
-                  if(strncmp(c_name,default_blocks[0],4) ==0){
+                  if(strncmp(c_name,"HEAD",4) ==0){
                           //Read the actual header. 
                           if(c_info.length != sizeof(gadget_header)){
                                   WARN("Mis-sized HEAD block in %s\n",file);
@@ -176,12 +178,23 @@ namespace GadgetReader{
                                  c_map.header.num_files=-1;
                                  return c_map;
                           }
+                          /*Set the total_file_part local variable*/
+                          for(int i=0; i<N_TYPE; i++)
+                                  total_file_part+=c_map.header.npart[i];
                           //Next block
                           continue;
                   }
                   //If POS or VEL block, 3 floats per particle.
-                  if(strncmp(c_name,default_blocks[1],4)==0 || strncmp(c_name,default_blocks[2],4)==0)
+                  if(strncmp(c_name,"POS ",4)==0 || strncmp(c_name,"VEL ",4)==0)
                       c_info.partlen=3*sizeof(float);
+                  /*A heuristic to detect LongIDs. Won't always work.*/
+                  else if(strncmp(c_name,"ID  ",4)==0){
+                          if(total_file_part*c_map.header.num_files > 1<<30){
+                                  c_info.partlen=sizeof(int64_t);
+                          }
+                          else
+                                  c_info.partlen=sizeof(int32_t);
+                  }
                   //Otherwise one float per particle.
                   else
                       c_info.partlen=sizeof(float);
@@ -196,10 +209,9 @@ namespace GadgetReader{
                     * If this is true, we can't get record size from the length and we just have to guess
                     * At least the record sizes at either end should be consistently wrong. */
                    /* Better hope this only happens for blocks where all particles are present.*/
-                          uint64_t extra_len=0;
-                          for(int i=0; i<N_TYPE; i++)
-                                  extra_len+=c_map.header.npart[i];
-                          extra_len*=c_info.partlen;
+                          uint64_t extra_len=total_file_part*c_info.partlen;
+                          WARN("Block %s was longer than could fit in %lu bytes.\n",c_name,sizeof(uint32_t));
+                          WARN("Guessed size of %lu from header\n",extra_len);
                           /*Seek the rest of the block*/
                           fseek(fd,extra_len-c_info.length,SEEK_CUR);
                           /*If it still doesn't work, give up*/
@@ -207,11 +219,8 @@ namespace GadgetReader{
                               ( !swap_endian && record_size != c_info.length) ||
                               ( swap_endian && endian_swap(&record_size) != c_info.length)){
                                   WARN("Corrupt record for block %s in %s (%lu, %u)!\n",c_name,file, c_info.length, record_size);
-                                  WARN("Cannot read the rest of this file\n");
-                                  return c_map;
+                                  continue;
                           }
-                          WARN("Block %s was longer than could fit in %lu bytes.\n",c_name,sizeof(uint32_t));
-                          WARN("Guessed size of %lu from header\n",extra_len);
                           /*Otherwise store this new block length*/
                           c_info.length=extra_len;
                   }
