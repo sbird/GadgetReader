@@ -189,7 +189,7 @@ namespace GadgetReader{
                       c_info.partlen=3*sizeof(float);
                   /*A heuristic to detect LongIDs. Won't always work.*/
                   else if(strncmp(c_name,"ID  ",4)==0){
-                          if(total_file_part*c_map.header.num_files > 1<<30){
+                          if(total_file_part*c_map.header.num_files >= (int64_t)1<<32){
                                   c_info.partlen=sizeof(int64_t);
                           }
                           else
