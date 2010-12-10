@@ -185,7 +185,8 @@ namespace GadgetReader{
                    * Only skip types for which the block is actually present:
                    * Unfortunately there is no way of the library knowing
                    * which particle has which type,
-                   * so there is no way of telling that in advance.*/
+                   * so there is no way of telling that in advance.
+                   * FIXME: Do not try to read two non-contiguous types from the file in one call.*/
                 #ifndef SWIG
                   int64_t GetBlock(std::string BlockName, void *block, int64_t npart_toread, int64_t start_part, int skip_type);
                 #endif
