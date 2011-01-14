@@ -16,7 +16,7 @@ endif
 
 #Are we using gcc or icc?
 ifeq (icc,$(findstring icc,${CC}))
-  CFLAGS += -w2 -O2  -g -fPIC
+  CFLAGS += -w1 -O2  -g -fPIC
 else
   CFLAGS += -Wall -O2  -g -fPIC
 endif
