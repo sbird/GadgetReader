@@ -25,7 +25,7 @@
  *
  * GadgetReader attempts to do all these things automatically with an easy programmatic interface. 
  *
- * It supports Gadget-I and endian swapping simply and as robustly as possible. 
+ * It aims to support Gadget-I and endian swapping simply and as robustly as possible. 
  *
  * It attempts to detect a few trivial programmer errors, or file corruptions. 
  *
@@ -47,6 +47,43 @@
  * This will get you the positions of all baryons in the snapshot.
  *
  * A longer example is contained within PGIIhead.cpp; this program is also useful for printing Gadget file headers. 
+ *
+ * \section details_sec Details
+ * 
+ * There are a few gotchas to use of this library. 
+ *
+ * The largest one concerns the final argument of GetBlocks , called skip_types. 
+ * In order to support getting one type of particle at a time, we need to know which particles
+ * correspond to which particle types. This would be easy if all blocks contained data for all particles,
+ * however this is not the case; an internal energy block, for example, will only contain data for gas particles
+ * (which may be any subset of types 0 and 2-5). Therefore we provide the skip_types argument;
+ * this is a bitfield which instructs GadgetReader to skip particle types which are present in the block, 
+ * but which are not desired.
+ *
+ * If the header shows that there are no particles of a given type in this snapshot file, skip_types for this
+ * type has no effect.
+ *
+ * Do not attempt to read multiple non-contiguous types at once, this is not yet supported.
+ *
+ * Some examples:
+ * For a POS block containing Baryons, DM and stars, to get only the DM, use:
+ *
+ * skip_types = 2**BARYON_TYPE+ 2**STARS_TYPE, or 2**N_TYPE-1 -2**DM_TYPE
+ *
+ * For a U block containing Baryons and stars, to get only the stars, use:
+ *
+ * skip_types = 2**BARYON_TYPE or 2**N_TYPE -1 -2**STARS_TYPE - 2**DM_TYPE 
+ *
+ * Note the DM_TYPE is not skipped, as it does not appear in the file.
+ *
+ * Gadget-I format files do not contain block names. GadgetReader attempts to detect the default block order, but
+ * this will not work if you are using a modified GADGET. Therefore, in this case, you should pass a vector of 
+ * std:strings containing the ordered names of the blocks to the constructor. You can then load the particle blocks
+ * as normal using GetBlocks()
+ *
+ * There is no metadata containing the number of bytes used per particle in a given block. 
+ * GadgetReader attempts to guess this, however, should the guess be incorrect, you can override it with 
+ * the SetPartLen method.
  *
  * \section req_sec Requirements
  * A C++ compiler with map, vector, set and stdint.h

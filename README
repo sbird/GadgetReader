@@ -6,7 +6,7 @@ To build the library, do:
 
 make
 
-For the test suite (requires Boost::Test 1.34), do: 
+For the test suite (requires Boost::Test > 1.34), do: 
 
 make test
 
@@ -26,5 +26,8 @@ To build example program:
 
 make PGIIhead
 
+Note this embeds the current path of the library into the executable, so you will have a 
+linker error if you then move librgad.so to another directory. 
+
 Further documentation may be found in the doxygen generated files in doc/html/index.html
-or in gadgetreader.hpp
+(type "make doc" to make this file) or in gadgetreader.hpp
