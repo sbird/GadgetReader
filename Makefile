@@ -61,7 +61,7 @@ cleanall: clean
 	-rm -Rf python perl doc
 
 dist:
-	tar -czf GadgetReader.tar.gz Makefile $(head) Doxyfile *.cpp *.c test_g2_snap.*
+	tar -czf GadgetReader.tar.gz Makefile README $(head) Doxyfile *.cpp *.c test_g2_snap.*
 doc: Doxyfile gadgetreader.hpp gadgetreader.cpp
 	doxygen $<
 
