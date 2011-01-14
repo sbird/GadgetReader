@@ -17,6 +17,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/** \file 
+ * GadgetReader library method file*/
 namespace GadgetReader{
 
 /*Error output macros*/

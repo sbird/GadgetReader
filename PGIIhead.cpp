@@ -11,7 +11,8 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
-/* A quick and easy example program to extract the header of a GADGET file into ASCII*/
+/** \file
+ * A quick and easy example program to extract the header of a GADGET file into ASCII*/
 
 #include "gadgetreader.hpp"
 #include <iostream>

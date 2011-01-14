@@ -13,7 +13,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 #define BOOST_TEST_DYN_LINK
 
-
+/** \file
+ * Test suite using boost::test*/
 #define BOOST_TEST_MODULE GadgetReader
 #include "gadgetreader.hpp"
 #include <boost/test/unit_test.hpp>

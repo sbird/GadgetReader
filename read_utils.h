@@ -15,6 +15,8 @@
 #define __READ_UTILS_H
 
 #include <stdint.h>
+/** \file 
+ * Contains multi_endian_swap() and endian_swap() */
 
 #ifdef __cplusplus
 extern "C"{
@@ -22,6 +24,8 @@ extern "C"{
 /*Functions to swap the enddianness of shorts and ints.*/
 //inline void endian_swap(uint16_t& x);
 
+/** Function to swap the enddianness of ints.
+ * @param x int to swap*/
 inline uint32_t endian_swap(uint32_t* x)
 {
     *x = (*x>>24) | 
@@ -31,8 +35,9 @@ inline uint32_t endian_swap(uint32_t* x)
     return *x;
 }
 
-/*Swap the endianness of a range of integers*/
-/*range is in bytes*/
+/** Swap the endianness of a range of integers
+ * @param start Pointer to memory to start at.
+ * @param range Range to swap, in bytes.*/
 void multi_endian_swap(uint32_t * start,int32_t range);
 
 #ifdef __cplusplus

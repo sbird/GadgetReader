@@ -11,7 +11,11 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
-/*Gadget reader library header file*/
+/** \file 
+ * Gadget reader library header file*/
+
+/** \namespace GadgetReader
+ *  Class for reading Gadget files*/
 
 /** \mainpage 
  * \section intro_sec Introduction 
@@ -83,7 +87,7 @@
  *
  * There is no metadata containing the number of bytes used per particle in a given block. 
  * GadgetReader attempts to guess this, however, should the guess be incorrect, you can override it with 
- * the SetPartLen method.
+ * the SetPartLen() method.
  *
  * \section req_sec Requirements
  * A C++ compiler with map, vector, set and stdint.h

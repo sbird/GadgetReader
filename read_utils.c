@@ -15,8 +15,11 @@
 #include <stdio.h>
 #include <string.h>
 
+/** \file 
+ * Defines multi_endian_swap() */
 
-/*Functions to swap the enddianness of shorts and ints.*/
+/* Functions to swap the enddianness of shorts and ints.
+ * @param x short to swap. Int version in read_utils.h*/
 /*inline void endian_swap(uint16_t& x)
 {
     x = (x>>8) | 
@@ -39,7 +42,6 @@
   return nread;
 }*/
 
-/*Swap the endianness of a range of integers*/
 void multi_endian_swap(uint32_t * start,int32_t range){
         uint32_t* cur=start;
         while(cur < start+range)
