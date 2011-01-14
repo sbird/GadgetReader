@@ -1,12 +1,27 @@
+ifeq ($(CC),cc)
+  ICC:=$(shell which icc --tty-only 2>&1)
+  #Can we find icc?
+  ifeq (/icc,$(findstring /icc,${ICC}))
+     CC = icc -vec_report0
+     CXX = icpc
+  else
+     GCC:=$(shell which gcc --tty-only 2>&1)
+     #Can we find gcc?
+     ifeq (/gcc,$(findstring /gcc,${GCC}))
+        CC = gcc
+        CXX = g++
+     endif
+  endif
+endif
 
-# CC = icc -vec_report0
-CC= gcc
-# CFLAGS = -w2 -O2  -g -fPIC
-CFLAGS = -Wall -O2  -g -fPIC
-CXXFLAGS = $(CFLAGS)
-# CXX = icpc
-CXX = g++
-LDFLAGS=-Wl,-rpath,${CURDIR} -L${CURDIR} -lrgad
+#Are we using gcc or icc?
+ifeq (icc,$(findstring icc,${CC}))
+  CFLAGS += -w2 -O2  -g -fPIC
+else
+  CFLAGS += -Wall -O2  -g -fPIC
+endif
+CXXFLAGS += $(CFLAGS)
+LDFLAGS +=-Wl,-rpath,${CURDIR} -L${CURDIR} -lrgad
 OPTS = 
 PG = 
 CFLAGS += $(OPTS)
@@ -46,7 +61,7 @@ cleanall: clean
 	-rm -Rf python perl doc
 
 dist:
-	tar -czf GadgetReader.tar.gz Makefile $(head) *.cpp *.c test_g2_snap.*
+	tar -czf GadgetReader.tar.gz Makefile $(head) Doxyfile *.cpp *.c test_g2_snap.*
 doc: Doxyfile gadgetreader.hpp gadgetreader.cpp
 	doxygen $<
 
