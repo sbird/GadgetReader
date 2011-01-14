@@ -60,8 +60,6 @@ clean:
 cleanall: clean
 	-rm -Rf python perl doc
 
-dist:
-	tar -czf GadgetReader.tar.gz Makefile README $(head) Doxyfile *.cpp *.c test_g2_snap.*
 doc: Doxyfile gadgetreader.hpp gadgetreader.cpp
 	doxygen $<
 
@@ -88,3 +86,6 @@ perl/_gadgetreader.so: perl/rgad_perl.cxx librgad.so perl
 	$(CXX) ${CXXFLAGS} ${PERLINC} -shared -Wl,-soname,_gadgetreader.so ${LDFLAGS} $< -o $@
 
 perlbind: perl/_gadgetreader.so
+
+dist: Makefile README $(head) Doxyfile PGIIhead.cpp PGIIhead_out.txt btest.cpp read_utils.c gadgetreader.cpp gadgetreader.i test_g2_snap.0 test_g2_snap.1
+	tar -czf GadgetReader.tar.gz $^
