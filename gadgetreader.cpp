@@ -445,7 +445,7 @@ namespace GadgetReader{
                 //Also skip however many start_parts are left.
                 if(start_part > 0){
                         //If the skip is larger than this file, go onto the next file.
-                        if(npart_file < start_part){
+                        if(npart_file <= start_part){
                                 start_part-=npart_file;
                                 continue;
                         }
