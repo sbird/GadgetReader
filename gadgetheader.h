@@ -1,6 +1,18 @@
 #ifndef __GADGETFILEHEADER
 #define __GADGETFILEHEADER
 
+#include <stdint.h>
+
+/*Define the particle types*/
+#define BARYON_TYPE 0
+#define DM_TYPE 1
+#define DISK_TYPE 2
+#define NEUTRINO_TYPE 2
+#define BULGE_TYPE 3
+#define STARS_TYPE 4
+#define BNDRY_TYPE 5
+#define N_TYPE 6
+
   /** The Gadget simulation file header.
    */
  typedef struct {
