@@ -26,7 +26,7 @@ OPTS =
 PG = 
 CFLAGS += $(OPTS)
 obj=gadgetreader.o read_utils.o
-head=read_utils.h gadgetreader.hpp
+head=read_utils.h gadgetreader.hpp gadgetheader.h
 #Include directories for python and perl.
 PYINC:=$(shell python-config --includes)
 #Check python-config isn't a python 3 version: 
