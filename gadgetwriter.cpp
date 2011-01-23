@@ -98,10 +98,10 @@ namespace GadgetWriter{
                 int64_t init_fpos = (*it).second+begin*partlen+header_size;
                 fseek(fd,init_fpos, SEEK_SET);
           }
-          ret=fwrite(data, partlen*np_write, 1, fd);
-          if(ret != np_write*partlen){
-                  WARN("Wrote only %d bytes of %d\n",ret,np_write*partlen);
-                  return ret/partlen;
+          ret=fwrite(data, partlen, np_write, fd);
+          if(ret != np_write){
+                  WARN("Wrote only %d particles of %d\n",ret,np_write);
+                  return ret;
           }
           //If this is the last write to this segment, write the footer and close the file
           if(type == MaxType && (np_write+begin == npart[type])){
@@ -192,26 +192,28 @@ namespace GadgetWriter{
           BlockNames.push_back(u);
           //Add the user-specified blocks, which override the defaults.
           //In case of conflict, later overrides earlier. 
-          for(it=(*BlockNamesIn).begin(); it<(*BlockNamesIn).end(); ++it){
-                  if( (*it).types.size() != N_TYPE )
-                          continue; //We don't want invalid blocks
-                  if( (*it).name == std::string("HEAD") )
-                          continue; //We don't want head blocks
-                  for(jt=BlockNames.begin();jt<=BlockNames.end();++jt){
-                          if(jt == BlockNames.end())
-                                  BlockNames.push_back(*it);
-                          else if((*jt).name == (*it).name){
-                                  (*jt)=(*it);
-                                  break;
-                          }
-                  }
+          if(BlockNamesIn != NULL){
+                for(it=(*BlockNamesIn).begin(); it<(*BlockNamesIn).end(); ++it){
+                        if( (*it).types.size() != N_TYPE )
+                                continue; //We don't want invalid blocks
+                        if( (*it).name == std::string("HEAD") )
+                                continue; //We don't want head blocks
+                        for(jt=BlockNames.begin();jt<=BlockNames.end();++jt){
+                                if(jt == BlockNames.end())
+                                        BlockNames.push_back(*it);
+                                else if((*jt).name == (*it).name){
+                                        (*jt)=(*it);
+                                        break;
+                                }
+                        }
+                }
           }
           //Set up npart
           if(npart.size() < N_TYPE)
                   npart[std::slice(0,npart.size(),1)] = npart_in;
           else
                   npart = npart_in[std::slice(0,N_TYPE,1)];
-          if(3*sizeof(float)*npart.max()/num_files > ((int64_t)1<<32)){
+          if(3*(npart.max()/num_files) > (1L<<32)/sizeof(float)){
                   WARN("Not enough room for %ld particles in %d files\n",npart.max(),num_files);
                   num_files = 3*sizeof(float)*npart.max()/((int64_t)1<<32);
                   WARN("Increasing to %d files\n",num_files);

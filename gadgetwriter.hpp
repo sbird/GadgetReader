@@ -25,8 +25,8 @@
  * \section req_sec Requirements
  * A C++ compiler with map, vector, set and stdint.h
  */
-#ifndef __GADGETREADER_H
-#define __GADGETREADER_H
+#ifndef __GADGETWRITER_H
+#define __GADGETWRITER_H
 
 /*Symbol table visibility stuff*/
 #if __GNUC__ >= 4
