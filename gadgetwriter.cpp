@@ -176,7 +176,7 @@ namespace GadgetWriter{
   }
 
 
-  GWriteSnap::GWriteSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int num_files, bool debug, bool format_2,int idsize, std::vector<block_info> *BlockNamesIn) : npart(N_TYPE),num_files(num_files),debug(debug)
+  GWriteSnap::GWriteSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int num_files,int idsize,  bool debug, bool format_2,std::vector<block_info> *BlockNamesIn) : npart(N_TYPE),num_files(num_files),debug(debug)
   {
           std::valarray<uint32_t> npart_file(N_TYPE);
           std::vector<block_info>::iterator it, jt;

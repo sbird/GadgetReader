@@ -101,7 +101,7 @@ namespace GadgetWriter{
   /** Main class for reading Gadget snapshots. */
   class DLL_PUBLIC GWriteSnap{
           public:
-                  GWriteSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int num_files=1, bool debug=true, bool format_2 = true, int idsize=sizeof(int64_t),std::vector<block_info> *BlockNames=NULL);
+                  GWriteSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int num_files=1, int idsize=sizeof(int64_t),bool debug=true, bool format_2 = true, std::vector<block_info> *BlockNames=NULL);
                   int64_t WriteBlocks(std::string BlockName, int type, void *data, int64_t np_write, int64_t begin);
                   //npart, num_files and friends silently ignored
                   int WriteHeaders(gadget_header head);
