@@ -37,14 +37,24 @@ PERLINC=-I/usr/lib/perl5/core_perl/CORE
 
 .PHONY: all clean test dist pybind bind
 
-all: librgad.so
+all: librgad.so libwgad.so
 
 librgad.so: librgad.so.1
 	ln -sf $< $@
 
 librgad.so.1: $(obj)
-	$(CC) -shared -Wl,-soname,$@ -o $@  $(obj)
+	$(CC) -shared -Wl,-soname,$@ -o $@  $^
+
+#Writer library. Note this is untested.
+libwgad.so: libwgad.so.1
+	ln -sf $< $@
+
+libwgad.so.1: gadgetwriter.o
+	$(CC) -shared -Wl,-soname,$@ -o $@ $^
+
 gadgetreader.o: gadgetreader.cpp $(head) read_utils.o
+gadgetwriter.o: gadgetwriter.cpp gadgetwriter.hpp gadgetheader.h
+
 read_utils.o: read_utils.c read_utils.h
 test: PGIIhead btest 
 	@./btest
