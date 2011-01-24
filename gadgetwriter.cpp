@@ -52,7 +52,7 @@ namespace GadgetWriter{
         for(int i=0; i<N_TYPE; i++){
                 head.npart[i]=npart[i];
         }
-        if(!fd && !(fd = fopen(filename.c_str(), "r+"))){
+        if(!fd && !(fd = fopen(filename.c_str(), "a+"))){
                WARN("Can't open '%s' for writing!\n", filename.c_str());
                return 1;
         }
@@ -76,7 +76,7 @@ namespace GadgetWriter{
                   WARN("Block %s, file %s. Truncated to %d particles\n",BlockName.c_str(), filename.c_str(),npart[type]);
                   np_write=npart[type]-begin;
           }
-          if(!fd && !(fd = fopen(filename.c_str(), "r+"))){
+          if(!fd && !(fd = fopen(filename.c_str(), "a+"))){
                  WARN("Can't open '%s' for writing!\n", filename.c_str());
                  return 0;
           }
