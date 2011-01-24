@@ -139,7 +139,7 @@ namespace GadgetReader{
                      if(swap_endian) endian_swap(&record_size);
                      //c_info.length includes the record_size integers.
                      if(c_info.length != record_size){
-                             WARN("Corrupt record in %s for block %s (%lu vs %u), skipping rest of file\n",file,c_name, c_info.length, record_size);
+                             WARN("Corrupt record in %s header for block %s (%lu vs %u), skipping rest of file\n",file,c_name, c_info.length, record_size);
                              break;
                      }
                   }
@@ -218,8 +218,7 @@ namespace GadgetReader{
                   if((fread(&record_size,sizeof(uint32_t),1,fd)!=1) ||
                       ( !swap_endian && record_size != c_info.length) ||
                       ( swap_endian && endian_swap(&record_size) != c_info.length)){
-                          WARN("Corrupt record for block %s in %s (%lu, %u)!\n",c_name,file, c_info.length, record_size);
-                          WARN("Unable to read rest of file\n");
+                          WARN("Corrupt record in %s footer for block %s (%lu vs %u), skipping rest of file\n",file, c_name, c_info.length, record_size);
                           return c_map;
                   }
                   /*Store new block length*/
