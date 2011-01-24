@@ -52,7 +52,7 @@ namespace GadgetWriter{
         for(int i=0; i<N_TYPE; i++){
                 head.npart[i]=npart[i];
         }
-        if(!fd && !(fd = fopen(filename.c_str(), "r+")) && !(fd = fopen(filename.c_str(),"w"))){
+        if(!fd && !(fd = fopen(filename.c_str(), "r+")) && !(fd = fopen(filename.c_str(),"w+"))){
                WARN("Can't open '%s' for writing!\n", filename.c_str());
                return 1;
         }
@@ -76,7 +76,7 @@ namespace GadgetWriter{
                   WARN("Block %s, file %s. Truncated to %d particles\n",BlockName.c_str(), filename.c_str(),npart[type]);
                   np_write=npart[type]-begin;
           }
-          if(!fd && !(fd = fopen(filename.c_str(), "r+")) && !(fd = fopen(filename.c_str(),"w"))){
+          if(!fd && !(fd = fopen(filename.c_str(), "r+")) && !(fd = fopen(filename.c_str(),"w+"))){
                  WARN("Can't open '%s' for writing!\n", filename.c_str());
                  return 0;
           }
@@ -95,7 +95,9 @@ namespace GadgetWriter{
                 }
           }
           else {
-                int64_t init_fpos = (*it).second+begin*partlen+header_size;
+                int64_t init_fpos = (*it).second+begin*partlen;
+                if(type==MinType)
+                        init_fpos+=header_size;
                 fseek(fd,init_fpos, SEEK_SET);
           }
           ret=fwrite(data, partlen, np_write, fd);
