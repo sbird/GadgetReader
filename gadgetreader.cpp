@@ -270,6 +270,7 @@ namespace GadgetReader{
           rewind(fd);
           //Read the first integer
           if(fread(&record_size,sizeof(int32_t),1,fd)!=1){
+                 WARN("Empty file: Could not read first integer\n");
                  return 1;
           }
           switch(record_size){
@@ -297,6 +298,7 @@ namespace GadgetReader{
                        format_2=false;
                        break;
                   default:
+                       WARN("WARNING: File corrupt! First integer is: %d\n",record_size);
                        rewind(fd);
                        return 2;
           }

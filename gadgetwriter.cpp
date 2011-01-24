@@ -28,7 +28,7 @@ namespace GadgetWriter{
                 fprintf(stderr, __VA_ARGS__); \
         }}while(0)
   
-  GWriteFile::GWriteFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2,bool debug) : filename(filename), format_2(format_2), debug(debug), npart(uint32_t(0),N_TYPE)
+  GWriteFile::GWriteFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2,bool debug) : filename(filename), format_2(format_2), debug(debug), npart(N_TYPE)
   {
           MinType=-1;
           for(int i=0; i< N_TYPE; i++){
@@ -52,7 +52,7 @@ namespace GadgetWriter{
         for(int i=0; i<N_TYPE; i++){
                 head.npart[i]=npart[i];
         }
-        if(!fd && !(fd = fopen(filename.c_str(), "a+"))){
+        if(!fd && !(fd = fopen(filename.c_str(), "r+")) && !(fd = fopen(filename.c_str(),"w"))){
                WARN("Can't open '%s' for writing!\n", filename.c_str());
                return 1;
         }
@@ -76,7 +76,7 @@ namespace GadgetWriter{
                   WARN("Block %s, file %s. Truncated to %d particles\n",BlockName.c_str(), filename.c_str(),npart[type]);
                   np_write=npart[type]-begin;
           }
-          if(!fd && !(fd = fopen(filename.c_str(), "a+"))){
+          if(!fd && !(fd = fopen(filename.c_str(), "r+")) && !(fd = fopen(filename.c_str(),"w"))){
                  WARN("Can't open '%s' for writing!\n", filename.c_str());
                  return 0;
           }
@@ -122,7 +122,6 @@ namespace GadgetWriter{
           //Skip the header
           int64_t cur_pos=sizeof(gadget_header)+header_size+footer_size;
           std::vector<block_info>::iterator it;
-          
           for(it=(*BlockNames).begin(); it<(*BlockNames).end(); ++it){
                   block_info block=(*it);
                   std::map<int,int64_t>p;
@@ -242,6 +241,8 @@ namespace GadgetWriter{
         uint32_t ret;
         int64_t np_written=0;
         if(type < 0 || type >= N_TYPE)
+                return 0;
+        if(np_write == 0)
                 return 0;
         for(jt=BlockNames.begin();jt<BlockNames.end();++jt){
                 if((*jt).name == BlockName){
