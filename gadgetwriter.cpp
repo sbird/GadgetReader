@@ -28,7 +28,7 @@ namespace GadgetWriter{
                 fprintf(stderr, __VA_ARGS__); \
         }}while(0)
   
-  GWriteFile::GWriteFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2,bool debug) : filename(filename), format_2(format_2), debug(debug)
+  GWriteFile::GWriteFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2,bool debug) : filename(filename), format_2(format_2), debug(debug), npart(uint32_t(0),N_TYPE)
   {
           MinType=-1;
           for(int i=0; i< N_TYPE; i++){
@@ -89,7 +89,7 @@ namespace GadgetWriter{
           //If we are writing from the beginning, write the block header
           if(begin == 0 && type == MinType){
                 fseek(fd, (*it).second,SEEK_SET);
-                if(write_block_header(fd, BlockName, partlen*npart[type])){
+                if(write_block_header(fd, BlockName, partlen*npart.sum())){
                         WARN("Could not write block header %s in file %s\n",BlockName.c_str(), filename.c_str());
                         return 0;
                 }
@@ -105,7 +105,7 @@ namespace GadgetWriter{
           }
           //If this is the last write to this segment, write the footer and close the file
           if(type == MaxType && (np_write+begin == npart[type])){
-                  if(write_block_footer(fd, BlockName, partlen*npart[type])){
+                  if(write_block_footer(fd, BlockName, partlen*npart.sum())){
                         WARN("Could not write block footer %s in file %s\n",BlockName.c_str(), filename.c_str());
                         return np_write+1;
                   }
@@ -150,6 +150,7 @@ namespace GadgetWriter{
                   
   int GWriteFile::write_block_header(FILE * fd, std::string name, uint32_t blocksize)
   {
+          WARN("Called write_block_header for %s, size %d\n",name.c_str(), blocksize);
       if(format_2){
         /*This is the block header record, which we want for format two files*/
         int32_t blkheadsize = sizeof(int32_t) + 4 * sizeof(char);
@@ -170,6 +171,7 @@ namespace GadgetWriter{
   int GWriteFile::write_block_footer(FILE * fd, std::string name, uint32_t blocksize)
   {
         /*This is the record size, which we want for all files*/
+          WARN("Called write_block_footer for %s, size %d\n",name.c_str(), blocksize);
         if(fwrite(&blocksize, sizeof(uint32_t), 1, fd) !=1)
                 return 1;
         return 0;

@@ -83,7 +83,7 @@ namespace GadgetWriter{
                 bool debug;
                 int MinType, MaxType;
                 int header_size,footer_size;
-                uint32_t npart[N_TYPE]; //Number of particles in this file.
+                std::valarray<uint32_t> npart; //Number of particles in this file.
                 FILE * fd;
                 //Go from Key = <BlockName, type> Value = <start>  
                 std::map<std::string,std::map<int, int64_t> > blocks;
