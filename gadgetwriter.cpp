@@ -150,7 +150,6 @@ namespace GadgetWriter{
                   
   int GWriteFile::write_block_header(FILE * fd, std::string name, uint32_t blocksize)
   {
-          WARN("Called write_block_header for %s, size %d\n",name.c_str(), blocksize);
       if(format_2){
         /*This is the block header record, which we want for format two files*/
         int32_t blkheadsize = sizeof(int32_t) + 4 * sizeof(char);
@@ -171,7 +170,6 @@ namespace GadgetWriter{
   int GWriteFile::write_block_footer(FILE * fd, std::string name, uint32_t blocksize)
   {
         /*This is the record size, which we want for all files*/
-          WARN("Called write_block_footer for %s, size %d\n",name.c_str(), blocksize);
         if(fwrite(&blocksize, sizeof(uint32_t), 1, fd) !=1)
                 return 1;
         return 0;
