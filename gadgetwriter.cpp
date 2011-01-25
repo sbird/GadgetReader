@@ -46,13 +46,13 @@ namespace GadgetWriter{
           fd=NULL;
           return;
   }
-
+  
   int GWriteFile::WriteHeader(gadget_header head)
   {
         for(int i=0; i<N_TYPE; i++){
                 head.npart[i]=npart[i];
         }
-        if(!fd && !(fd = fopen(filename.c_str(), "r+")) && !(fd = fopen(filename.c_str(),"w+"))){
+        if(!fd && !(fd = fopen(filename.c_str(), "w"))){
                WARN("Can't open '%s' for writing!\n", filename.c_str());
                return 1;
         }
@@ -63,8 +63,6 @@ namespace GadgetWriter{
                 WARN("Could not write header for %s\n",filename.c_str());
                 return 1;
         }
-        fclose(fd);
-        fd=NULL;
         return 0;
   }
 
@@ -76,7 +74,7 @@ namespace GadgetWriter{
                   WARN("Block %s, file %s. Truncated to %d particles\n",BlockName.c_str(), filename.c_str(),npart[type]);
                   np_write=npart[type]-begin;
           }
-          if(!fd && !(fd = fopen(filename.c_str(), "r+")) && !(fd = fopen(filename.c_str(),"w+"))){
+          if(!fd && !(fd = fopen(filename.c_str(),"w"))){
                  WARN("Can't open '%s' for writing!\n", filename.c_str());
                  return 0;
           }
@@ -111,8 +109,6 @@ namespace GadgetWriter{
                         WARN("Could not write block footer %s in file %s\n",BlockName.c_str(), filename.c_str());
                         return np_write+1;
                   }
-                  fclose(fd);
-                  fd=NULL;
           }
           return np_write;
   }

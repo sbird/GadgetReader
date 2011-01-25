@@ -42,6 +42,7 @@
 #include <string>
 #include <valarray>
 #include <stdint.h>
+#include <stdio.h>
 
 /* Include the file header structure*/
 #include "gadgetheader.h"
@@ -76,6 +77,13 @@ namespace GadgetWriter{
                 /** Note npart is silently ignored.*/
                 int WriteHeader(gadget_header head);
                 uint32_t GetNPart(int type);
+                ~GWriteFile()
+                {
+                        if(fd)
+                           fclose(fd);
+                        return;
+                }
+
          private:
                 //The file's actual name
                 std::string filename;
