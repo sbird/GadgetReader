@@ -191,11 +191,10 @@ namespace GadgetReader{
                       c_info.partlen=3*sizeof(float);
                   /*A heuristic to detect LongIDs. Won't always work.*/
                   else if(strncmp(c_name,"ID  ",4)==0){
-                          if(total_file_part*c_map.header.num_files >= 1L<<32){
-                                  c_info.partlen=sizeof(int64_t);
-                          }
+                          if(c_info.length == total_file_part*sizeof(int32_t))
+                                c_info.partlen=sizeof(int32_t);
                           else
-                                  c_info.partlen=sizeof(int32_t);
+                                c_info.partlen=sizeof(int64_t);
                   }
                   //Otherwise one float per particle.
                   else
