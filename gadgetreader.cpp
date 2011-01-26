@@ -452,6 +452,7 @@ namespace GadgetReader{
                         //Otherwise add something to start_pos and take it off npart_file
                         start_pos+=start_part*cur_block.partlen;
                         npart_file-=start_part;
+                        start_part =0;
                 }
                 //There is a maximum amount of particles we want to read. 
                 //If we have reached it, truncate.
@@ -473,6 +474,8 @@ namespace GadgetReader{
                         WARN("Only read %u particles of %u from file %d\n",read_data,npart_file,i);
                 fclose(fd);
                 npart_read+=read_data;
+                if(npart_read == npart_toread) //We have enough
+                        break;
         }
         if(npart_toread > npart_read){
                 WARN("Read %ld particles out of %ld\n",npart_read,npart_toread);
