@@ -210,9 +210,9 @@ namespace GadgetWriter{
                   npart[std::slice(0,npart.size(),1)] = npart_in;
           else
                   npart = npart_in[std::slice(0,N_TYPE,1)];
-          if(3*(npart.max()/num_files) > (1L<<32)/sizeof(float)){
+          if(3*(npart.max()/num_files) > (1L<<31)/sizeof(float)){
                   WARN("Not enough room for %ld particles in %d files\n",npart.max(),num_files);
-                  num_files = 3*sizeof(float)*npart.max()/((int64_t)1<<32);
+                  num_files = 3*sizeof(float)*npart.max()/(1L<<31);
                   WARN("Increasing to %d files\n",num_files);
           }
           for(unsigned int i=0; i<npart.size();++i)
