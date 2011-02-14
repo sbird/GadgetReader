@@ -32,7 +32,8 @@ namespace std{
 %include "std_vector.i"
 namespace std{
    %template(StrVector) vector<string>;
-   %template(IntVector) vector<int>;
+/*   %template(IntVector) vector<int>;*/
+   %template(IntVector) vector<long long>;
    %template(FloatVector) vector<float>;
 }
 %include "stdint.i"

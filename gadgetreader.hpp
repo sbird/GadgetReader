@@ -190,7 +190,7 @@ namespace GadgetReader{
                   /** GetBlock overload returning an int.
                    * @see GetBlock
                    * This is here to support getting IDs, it is exactly the same as the earlier GetBlock overload*/
-                  std::vector<int> GetBlockInt(std::string BlockName, int64_t npart_toread, int64_t start_part, int skip_type);
+                  std::vector<long long> GetBlockInt(std::string BlockName, int64_t npart_toread, int64_t start_part, int skip_type);
                   /* Ideally here we would have a wrapper for returning 3-float blocks such as POS and VEL, 
                    * BUT SWIG can't handle nested classes, so we can't do that.*/
 

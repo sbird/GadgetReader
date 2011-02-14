@@ -524,7 +524,7 @@ namespace GadgetReader{
                   read_chunk=npart_toread;
           else
           /*Read a third of the data at a time.*/
-                  read_chunk=npart_toread/3+1;
+                  read_chunk=MIN_READ_SPLIT+1;
           /*Allocate memory*/
           if(!(block=(float *)malloc(read_chunk*partlen))){
                   WARN("Could not allocate temporary memory for particles!\n");
@@ -548,10 +548,10 @@ namespace GadgetReader{
   }
 
   /*Support getting IDs: is exactly the same as the above*/
-  std::vector<int> GSnap::GetBlockInt(std::string BlockName, int64_t npart_toread, int64_t start_part, int skip_type)
+  std::vector<long long> GSnap::GetBlockInt(std::string BlockName, int64_t npart_toread, int64_t start_part, int skip_type)
   {
-          std::vector<int> data;
-          int* block=NULL;
+          std::vector<long long> data;
+          int64_t* block=NULL;
           int64_t read_chunk, total_read=0, read;
           short partlen;
           if(!IsBlock(BlockName))
@@ -562,9 +562,9 @@ namespace GadgetReader{
                   read_chunk=npart_toread;
           else
           /*Read a third of the data at a time.*/
-                  read_chunk=npart_toread/3+1;
+                  read_chunk=MIN_READ_SPLIT+1;
           /*Allocate memory*/
-          if(!(block=(int *)malloc(read_chunk*partlen))){
+          if(!(block=(int64_t *)malloc(read_chunk*partlen))){
                   WARN("Could not allocate temporary memory for particles!\n");
                   return data;
           }
@@ -578,8 +578,16 @@ namespace GadgetReader{
                    * the loop will not stop*/
                   total_read+=read_chunk;
                   /*Append what we have to the vector*/
-                  for(uint64_t i=0; i< read*partlen/sizeof(float); i++)
+                  if(partlen == sizeof(int)){
+                        int* sblock=(int *) block;
+                        for(uint64_t i=0; i< read*partlen/sizeof(int); i++)
+                          data.push_back(sblock[i]);
+                  }
+                  /*Make it a 64-bit pointer*/
+                  else{
+                        for(uint64_t i=0; i< read*partlen/sizeof(int64_t); i++)
                           data.push_back(block[i]);
+                  }
           }
           free(block);
           return data;
