@@ -45,9 +45,9 @@ namespace std{
 
 %feature("autodoc","1");
 %include "gadgetreader.hpp"
+%include "gadgetheader.h"
 
 /* Methods to access the arrays in gadget_header, which SWIG can't wrap properly*/
-namespace GadgetReader{
 %extend gadget_header{
         uint32_t GetNpart(int i){
                 if(i >= N_TYPE || i<0)
@@ -62,6 +62,5 @@ namespace GadgetReader{
                         return $self->mass[i];
         }
 };
-}
 /* int64_t GetBlock(std::string BlockName, float *block, int64_t npart_toread, int64_t start_part, int skip_type){*/
 /*%apply (float* IN_ARRAY1, int DIMS1) {(float *block, int64_t npart_toread,)};*/
