@@ -29,30 +29,30 @@ namespace GadgetReader{
                 fprintf(stderr, __VA_ARGS__); \
         }}while(0)
   //Constructor; this does almost all the hard work of building a "map" of the block positions
-  GSnap::GSnap(std::string snap_filename, bool debugf, std::vector<std::string> *BlockNames)
+  GSnap::GSnap(std::string snap_filename, bool debug, std::vector<std::string> *BlockNames): debug(debug)
   {
-        file_map first_map;
         f_name first_file=snap_filename;
         FILE *fd;
         int64_t npart[N_TYPE];
         int files_expected=1;
-        swap_endian = false;
         bad_head64=false;
-        debug=debugf;
 
         //Try to open the file 
-        if(!(fd=fopen(first_file.c_str(),"r")) || check_filetype(fd)){
+        if(!(fd=fopen(first_file.c_str(),"r"))){
                 //Append ".0" to the filename if necessary.
                 first_file+=".0";
                 //and then try again
-                if(!(fd=fopen(first_file.c_str(),"r")) || check_filetype(fd)){
+                if(!(fd=fopen(first_file.c_str(),"r"))){
                         WARN("Could not open %s (.0)\n",snap_filename.c_str());
                         WARN("Does not exist, or is corrupt.\n");
                         return;
                 }
         }
+        fclose(fd);
         //Read the first file
-        first_map= construct_file_map(fd,first_file,BlockNames);
+        GSnapFile first_map(first_file, debug,BlockNames);
+        if(first_map.GetNumBlocks() == 0)
+                return;
         //Set the global variables. 
         base_filename=first_file;
         //Take the ".0" from the end if needed.
@@ -67,8 +67,6 @@ namespace GadgetReader{
         }
         //Put the information from the first file in
         file_maps.push_back(first_map);
-        //Close the first file
-        fclose(fd);
         //Add the particles for this file to the totals
         for(int j=0; j<N_TYPE; j++)
            npart[j]=file_maps[0].header.npart[j];
@@ -76,16 +74,10 @@ namespace GadgetReader{
         for(int i=1;i<files_expected;i++){
                 f_name c_name=base_filename;
                 char tmp[6];
-                file_map tmp_map;
                 snprintf(tmp,6,".%d",i);
                 c_name+=(std::string(tmp));
-                if(!(fd=fopen(c_name.c_str(),"r"))){
-                        WARN("Could not open file %d of %d (%s)\n",i+1,files_expected,c_name.c_str());
-                        continue;
-                }
-                tmp_map=construct_file_map(fd,c_name,BlockNames);
-                fclose(fd);
-                if(!check_headers(tmp_map.header,file_maps[0].header)){
+                GSnapFile tmp_map(c_name,debug, BlockNames);
+                if(tmp_map.GetNumBlocks() ==0 || !check_headers(tmp_map.header,file_maps[0].header)){
                         WARN("Headers inconsistent between file 0 and file %d, ignoring file %d\n",i,i);
                         continue;
                 }
@@ -109,39 +101,32 @@ namespace GadgetReader{
 
   //This takes an open file and constructs a map of where the blocks are within it, and then returns said map.
   //It ought to support endian swapped files as well as Gadget-I files.
-  file_map GSnap::construct_file_map(FILE *fd,const f_name strfile, std::vector<std::string>* BlockNames)
+   GSnapFile::GSnapFile(const f_name strfile, bool debug, std::vector<std::string>* BlockNames) : name(strfile),debug(debug)
   {
           #define N_BLOCKS 12
-          file_map c_map;
           //Default ordering of blocks for Gadget-I files
           const char *default_blocks[N_BLOCKS]={"HEAD","POS ","VEL ","ID  ","MASS","U   ","RHO ","NE  ","NH  ","NHE ","HSML","SFR "};
           unsigned int cur_block=0;
+          FILE * fd; 
           uint32_t record_size;
           /*Total number of particles in file*/
-          int64_t total_file_part=0;
-          c_map.name=strfile;
-          //Set a default "bad" value for the return
-          c_map.header.num_files=-1;
+          total_file_part=0;
           const char * file=strfile.c_str();
+          if(!(fd=fopen(strfile.c_str(),"r")) || check_filetype(fd)){
+                  WARN("Could not open %s (.0)\n",strfile.c_str());
+                  WARN("Does not exist, or is corrupt.\n");
+                  return;
+          }
+          header.num_files = -1;
           //Read now until we run out of file
           while(!feof(fd)){
                   block_info c_info;
                   char c_name[5]={"    "};
                   //Read another block header
                   if(format_2){
-                     c_info.length=read_G2_block_head(c_name,fd,file);
+                     c_info.length=read_block_head(c_name,fd,file);
                      if(c_info.length ==0)
                              break;//We have run out of file
-                     if(fread(&record_size,sizeof(int32_t),1,fd)!=1){
-                             WARN("Ran out of data in %s before block %s started\n",file,c_name);
-                             break;
-                     }
-                     if(swap_endian) endian_swap(&record_size);
-                     //c_info.length includes the record_size integers.
-                     if(c_info.length != record_size){
-                             WARN("Corrupt record in %s header for block %s (%lu vs %u), skipping rest of file\n",file,c_name, c_info.length, record_size);
-                             break;
-                     }
                   }
                   else{
                     /*For Gadget-I files, we have to settle for less certainty, 
@@ -166,23 +151,21 @@ namespace GadgetReader{
                           //Read the actual header. 
                           if(c_info.length != sizeof(gadget_header)){
                                   WARN("Mis-sized HEAD block in %s\n",file);
-                                  return c_map;
+                                  return;
                           }
-                          if((fread(&(c_map.header),sizeof(gadget_header),1,fd)!=1) ||
+                          if((fread(&header,sizeof(gadget_header),1,fd)!=1) ||
                           (fread(&record_size,sizeof(uint32_t),1,fd)!=1)){
                                   WARN("Could not read HEAD in %s!\n",file);
-                                  c_map.header.num_files=-1;
-                                  return c_map;
+                                  return;
                           }
                           if(swap_endian) endian_swap(&record_size);
                           if(record_size != sizeof(gadget_header)){
                                  WARN("Bad record size for HEAD in %s!\n",file);
-                                 c_map.header.num_files=-1;
-                                 return c_map;
+                                 return;
                           }
                           /*Set the total_file_part local variable*/
                           for(int i=0; i<N_TYPE; i++)
-                                  total_file_part+=c_map.header.npart[i];
+                                  total_file_part+=header.npart[i];
                           //Next block
                           continue;
                   }
@@ -218,15 +201,19 @@ namespace GadgetReader{
                       ( !swap_endian && record_size != c_info.length) ||
                       ( swap_endian && endian_swap(&record_size) != c_info.length)){
                           WARN("Corrupt record in %s footer for block %s (%lu vs %u), skipping rest of file\n",file, c_name, c_info.length, record_size);
-                          return c_map;
+                          return;
                   }
                   /*Store new block length*/
                   if(extra_len >= ((uint64_t)1)<<32)
                         c_info.length=extra_len;
+                  // Set up the particle types in the block. This also is a heuristic,
+                  // which assumes that blocks are either fully present or not for a given particle type
+                  if(!SetBlockTypes(c_info))
+                        continue;
                   //Append the current info to the map.
-                  c_map.blocks[std::string(c_name)] = c_info;
+                  blocks[std::string(c_name)] = c_info;
           }
-          return c_map;
+          return;
   }
  
  /* Read the header of a Gadget file. This is the "block header" not the file header, and gives the 
@@ -235,21 +222,25 @@ namespace GadgetReader{
   * name - place to store block name
   * fd - file descriptor
   * file - filename of open file */
- uint32_t GSnap::read_G2_block_head(char* name, FILE *fd, const char * file)
+ uint32_t GSnapFile::read_block_head(char* name, FILE *fd, const char * file)
  {
-        uint32_t head[4];
+        uint32_t head[5];
         //Read the "block header" record, only present on Gadget-II files. 
         //Has format: 
         //size (8), name (HEAD), length (256), size (8)
-        if(fread(&head,sizeof(uint32_t),4,fd)!=4)
+        if(fread(&head,sizeof(uint32_t),5,fd)!=5)
            //If we have run out of file, we can just return.
            return 0;
-        if(swap_endian)  multi_endian_swap(&head[0],4);
+        if(swap_endian)  multi_endian_swap(&head[0],5);
         if(head[0] != 8 || head[3] !=8){
                 WARN("Corrupt header record in file %s.\n",file);
                 WARN("Record length is: %u and ended as %u\n",head[0],head[3]);
-                WARN("Header bytes are: %s %u\n",(char *) head[1],head[2]);
+                WARN("Header bytes are: %s %u\n",(char *) &head[1],head[2]);
                 WARN("Maybe trying to read old-format file as new-format?\n");
+                return 0;
+        }
+        if(head[4] != head[2]-2*sizeof(uint32_t)){
+                WARN("Corrupt record in %s header for block %s (%lu vs %u), skipping rest of file\n",file,(char *) &head[1], head[2]-2*sizeof(uint32_t), head[4]);
                 return 0;
         }
         strncpy(name,(char *)&head[1],4);
@@ -261,7 +252,7 @@ namespace GadgetReader{
 
   /*Sets swap_endian and format_2. Returns 0 for success, 1 for an empty file, and 2 
    * if the filetype is weird (ie, if you tried to open a text file by mistake)*/
-  int GSnap::check_filetype(FILE* fd)
+  int GSnapFile::check_filetype(FILE* fd)
   {
           uint32_t record_size;
           //Start at the beginning.
@@ -271,6 +262,7 @@ namespace GadgetReader{
                  WARN("Empty file: Could not read first integer\n");
                  return 1;
           }
+          swap_endian = false;
           switch(record_size){
                   //For a valid Gadget-II file, the first integer will be 8.
                   //If the endianness is swapped
@@ -593,4 +585,66 @@ namespace GadgetReader{
           return data;
   }
 
+  bool GSnapFile::SetBlockTypes(block_info block)
+  {
+        /* Set up the particle types in the block, with a heuristic,
+        which assumes that blocks are either fully present or not for a given particle type */
+        for (int i=0; i<N_TYPE; i++)
+                block.p_types[i] = false;
+        if ((int)block.length/block.partlen == total_file_part){
+                for (int i=0; i<N_TYPE; i++)
+                        block.p_types[i] = true;
+                return true;
+        }
+        //Blocks which contain a single particle type
+        for (int n=0; n<N_TYPE; n++){
+            if (block.length == header.npart[n]*block.partlen){
+                block.p_types[n] = true;
+                return true;
+            }
+        }
+        //Blocks which contain two particle types
+        for (int n=0; n<N_TYPE; n++){
+                for (int m=0; m<N_TYPE; m++){
+                    if (block.length == (header.npart[m]+header.npart[n])*block.partlen){
+                        block.p_types[n] = true;
+                        block.p_types[m] = true;
+                        return true;
+                    }
+                }
+        }
+        //Blocks which contain three particle types
+        for (int n=0; n<N_TYPE; n++){
+                for (int m=0; m<N_TYPE; m++){
+                        for (int l=0; l<N_TYPE; l++){
+                            if (block.length == (header.npart[m]+header.npart[n])*block.partlen){
+                                block.p_types[n] = true;
+                                block.p_types[m] = true;
+                                block.p_types[l] = true;
+                                return true;
+                            }
+                        }
+                }
+        }
+        for (int i=0; i<N_TYPE; i++)
+                block.p_types[i] = true;
+        //Blocks which contain four particle types
+        for (int n=0; n<N_TYPE; n++){
+                for (int m=0; m<N_TYPE; m++){
+                    if ((int)block.length/block.partlen == total_file_part-header.npart[m]-header.npart[n]){
+                        block.p_types[n] = false;
+                        block.p_types[m] = false;
+                        return true;
+                    }
+                }
+        }
+        //Blocks which contain five particle type
+        for (int n=0; n<N_TYPE; n++){
+            if ((int)block.length/block.partlen == total_file_part - header.npart[n]){
+                block.p_types[n] = false;
+                return true;
+            }
+        }
+        return false;
+  }
 }

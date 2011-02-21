@@ -132,20 +132,57 @@ namespace GadgetReader{
     int64_t start_pos;
     uint64_t length; //in bytes, excluding the two integer "record sizes" at either end
     short partlen; //length for a single particle. Likely to be 4 or 12.
+    bool p_types[N_TYPE];
   } block_info;
   
   /** This private structure stores information about each file. 
    * May change without warning, don't use it.
    * Stores block maps, caches headers
    */
- typedef struct{
+ class DLL_LOCAL GSnapFile {
+    public:
     //The file's actual name
     f_name name;
     //The header is stored inline, as it is small
     gadget_header header;
     //The block map
     std::map<std::string,block_info> blocks;
-  } file_map;
+
+    /** Stores whether the file is endian swapped*/
+    bool swap_endian;
+
+    /**Total number of particles in this file*/
+    int64_t total_file_part;
+    /** Stores whether we are using format 1 or 2 files*/
+    bool format_2;
+    
+    /** Flag to control whether WARN prints anything */
+    bool debug;
+
+    /** Private function that does the hard work of looking over a file
+     * and constructing a map of where the blocks start and finish. */
+    GSnapFile(f_name filename, bool debug=true, std::vector<std::string> *BlockNames=NULL);
+    /** Get the file format. 
+     * First bit is format 2, second is swap_endian.
+     * Allows us to test if we have Gadget 1 or endian swapped files. */
+    int GetFormat(){
+            return swap_endian*2+(!format_2);
+    }
+
+    int GetNumBlocks(){
+            return blocks.size();
+    }
+    /** Private function to detect endian swapping or format 1 files.
+     * Sets swap_endian and format_2.
+     * Returns 0 for success, 1 for an empty file, and 2 
+     * if the filetype is weird (eg, if you tried to open a text file by mistake)*/
+    int check_filetype(FILE* fd);
+    /** Private function to read the block (not the file) header. */
+    uint32_t read_block_head(char* name, FILE *fd, const char * file);
+    
+    bool SetBlockTypes(block_info block);
+  
+  } ;
     
 #endif
   
@@ -161,7 +198,7 @@ namespace GadgetReader{
                    * @param debugf Whether runtime warnings are printed.
                    * @param BlockNames A list of block names, for format 1 files where we can't autodetect. If NULL, 
                    * a default value is returned. */
-                  GSnap(std::string snap_filename, bool debugf=true, std::vector<std::string> *BlockNames=NULL);
+                  GSnap(std::string snap_filename, bool debug=true, std::vector<std::string> *BlockNames=NULL);
                   /** Reads particles from a file block into the memory pointed to by block.
                    *This function is insanity with respect to bindings, for
                    * reasons which probably have to do with the total lack of memory or type safety.
@@ -214,7 +251,11 @@ namespace GadgetReader{
                    * First bit is format 2, second is swap_endian.
                    * Allows us to test if we have Gadget 1 or endian swapped files. */
                   int GetFormat(){
-                          return swap_endian*2+(!format_2);
+                          if (GetNumFiles() > 0){
+                                  return file_maps[0].GetFormat();
+                          }
+                          else
+                                  return 0;
                   }
                   /** Convenience function to get the total number of particles easily for a type
                    * Note when calculating total header, to add npart, not to use npart total, 
@@ -237,35 +278,18 @@ namespace GadgetReader{
                   /** Private function to check whether two headers are
                    * consistent with being from the same snapshot. */
                   DLL_LOCAL bool check_headers(gadget_header head1, gadget_header head2);
-                  /** Private function that does the hard work of looking over a file
-                   * and constructing a map of where the blocks start and finish. */
-                  DLL_LOCAL file_map construct_file_map(FILE *file,f_name filename, std::vector<std::string> *BlockNames);
-                  /** Private function to detect endian swapping or format 1 files.
-                   * Sets swap_endian and format_2.
-                   * Returns 0 for success, 1 for an empty file, and 2 
-                   * if the filetype is weird (eg, if you tried to open a text file by mistake)*/
-                  DLL_LOCAL int check_filetype(FILE* fd);
-                  /** Private function to read the block (not the file) header. */
-                  DLL_LOCAL uint32_t read_G2_block_head(char* name, FILE *fd, const char * file);
-  
                   /** Base filename for the snapshot*/
                   f_name base_filename;
 
-                  /** Stores whether the file is endian swapped*/
-                  bool swap_endian;
-
-                  /** Stores whether we are using format 1 or 2 files*/
-                  bool format_2;
-
+                  /** Flag to control whether WARN prints anything */
+                  bool debug;
                   /** This flag is a silly hack to indicate whether the header is setting
                    * the long word part of nparttotal incorrectly, as some versions of Genics do*/
                   bool bad_head64;
 
                   /** Vector to store the maps of each simulation snapshot*/
-                  std::vector<file_map> file_maps;
+                  std::vector<GSnapFile> file_maps;
 
-                  /** Flag to control whether WARN prints anything */
-                  bool debug;
   };
 
 }
