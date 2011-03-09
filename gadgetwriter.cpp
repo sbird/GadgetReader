@@ -133,7 +133,9 @@ namespace GadgetWriter{
                                   cur_pos+=header_size;
                   }
                   blocks[block.name]=p;
-                  cur_pos+=footer_size;
+                  /*Only add the footer if there is actually something in the block*/
+                  if(block.types.sum())
+                          cur_pos+=footer_size;
           }
           return;
   }

@@ -93,7 +93,7 @@ namespace GadgetWriter{
                 int header_size,footer_size;
                 std::valarray<uint32_t> npart; //Number of particles in this file.
                 FILE * fd;
-                //Go from Key = <BlockName, type> Value = <start>  
+                //Go from Key = <BlockName> Value = <Type, start>
                 std::map<std::string,std::map<int, int64_t> > blocks;
                 /** Private function to populate the above */
                 void construct_blocks(std::vector<block_info> * BlockNames);
