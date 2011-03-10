@@ -30,14 +30,8 @@ namespace GadgetWriter{
   
   GWriteFile::GWriteFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2,bool debug) : filename(filename), format_2(format_2), debug(debug), npart(N_TYPE)
   {
-          MinType=-1;
-          for(int i=0; i< N_TYPE; i++){
+          for(int i=0; i< N_TYPE; i++)
                   npart[i] = npart_in[i];
-                  if(MinType == -1 && npart[i] !=0)
-                          MinType=i;
-                  if(npart[i] !=0)
-                          MaxType = i;
-          }
           header_size=sizeof(int32_t);
           if(format_2)
                   header_size+=3*sizeof(int32_t)+4*sizeof(char);
@@ -81,13 +75,18 @@ namespace GadgetWriter{
           std::map<std::string, std::map<int,int64_t> >::iterator ip=blocks.find(BlockName);
           if(ip == blocks.end())
                   WARN("Block %s not found\n",BlockName.c_str());
+          /*Note that because internally all map keys are ordered by
+           * comparison, the first element of the map is also the one with the lowest type,
+           * and the final element has the largest type*/
+          int MinType =  (ip->second).begin()->first;
+          int MaxType =  (--(ip->second).end())->first;
           std::map<int,int64_t>::iterator it=((*ip).second).find(type);
           if(it == ((*ip).second).end())
-                  WARN("Type %d not found in block %s\n",type,BlockName.c_str());
+                WARN("Type %d not found in block %s\n",type,BlockName.c_str());
           //If we are writing from the beginning, write the block header
           if(begin == 0 && type == MinType){
                 fseek(fd, (*it).second,SEEK_SET);
-                if(write_block_header(fd, BlockName, partlen*npart.sum())){
+                if(write_block_header(fd, BlockName, partlen*calc_block_size(BlockName))){
                         WARN("Could not write block header %s in file %s\n",BlockName.c_str(), filename.c_str());
                         return 0;
                 }
@@ -105,7 +104,7 @@ namespace GadgetWriter{
           }
           //If this is the last write to this segment, write the footer and close the file
           if(type == MaxType && (np_write+begin == npart[type])){
-                  if(write_block_footer(fd, BlockName, partlen*npart.sum())){
+                  if(write_block_footer(fd, BlockName, partlen*calc_block_size(BlockName))){
                         WARN("Could not write block footer %s in file %s\n",BlockName.c_str(), filename.c_str());
                         return np_write+1;
                   }
@@ -122,24 +121,44 @@ namespace GadgetWriter{
           std::vector<block_info>::iterator it;
           for(it=(*BlockNames).begin(); it<(*BlockNames).end(); ++it){
                   block_info block=(*it);
-                  std::map<int,int64_t>p;
-                  for(int type=0; type< N_TYPE; type++){
-                          /*Continue if empty block*/
-                          if(!block.types[type] || !npart[type]) 
-                                  continue;
-                          p[type]=cur_pos;
-                          cur_pos+=block.partlen*npart[type];
-                          if(type==MinType)
-                                  cur_pos+=header_size;
-                  }
-                  blocks[block.name]=p;
-                  /*Only add the footer if there is actually something in the block*/
-                  if(block.types.sum())
+                  /*Only add the block if it is present for some particle types*/
+                  if(block.types.sum()) {
+                          std::map<int,int64_t>p;
+                          bool first=true;
+                          for(int type=0; type< N_TYPE; type++){
+                                  /*Continue if empty block*/
+                                  if(!block.types[type] || !npart[type]) 
+                                          continue;
+                                  p[type]=cur_pos;
+                                  cur_pos+=block.partlen*npart[type];
+                                  /*Want to add space for a header block after the first type only*/
+                                  if(first){
+                                          cur_pos+=header_size;
+                                          first=false;
+                                  }
+                          }
+                          blocks[block.name]=p;
                           cur_pos+=footer_size;
+                  }
           }
           return;
   }
  
+  uint32_t GWriteFile::calc_block_size(std::string name)
+  {
+          std::map<std::string,std::map<int, int64_t> >::iterator it=blocks.find(name);
+          if(it == blocks.end())
+                  return 0;
+          uint32_t total=0;
+          std::map<int, int64_t>& p = it->second;
+          std::map<int, int64_t>::iterator jt;
+          for(jt=p.begin(); jt != p.end(); ++jt){
+                  //jt->first is the integer corresponding to the type
+                  total +=npart[jt->first];
+          }
+          return total;
+  }
+
   uint32_t GWriteFile::GetNPart(int type)
   {
           if(type <0 || type > N_TYPE)

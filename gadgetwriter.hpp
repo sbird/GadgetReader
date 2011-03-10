@@ -89,7 +89,6 @@ namespace GadgetWriter{
                 std::string filename;
                 bool format_2;
                 bool debug;
-                int MinType, MaxType;
                 int header_size,footer_size;
                 std::valarray<uint32_t> npart; //Number of particles in this file.
                 FILE * fd;
@@ -97,6 +96,8 @@ namespace GadgetWriter{
                 std::map<std::string,std::map<int, int64_t> > blocks;
                 /** Private function to populate the above */
                 void construct_blocks(std::vector<block_info> * BlockNames);
+                /** Private function to calculate the size of a block*/
+                uint32_t calc_block_size(std::string name);
                 /**Function to write the block header
                  * @return 1 if error, 0 if fine.*/
                 int write_block_header(FILE * fd, std::string name, uint32_t blocksize);
