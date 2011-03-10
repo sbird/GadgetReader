@@ -138,7 +138,9 @@ namespace GadgetWriter{
                                   }
                           }
                           blocks[block.name]=p;
-                          cur_pos+=footer_size;
+                          /*Only add a footer if we have also added a header*/
+                          if(!first)
+                                cur_pos+=footer_size;
                   }
           }
           return;
