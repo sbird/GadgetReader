@@ -196,7 +196,7 @@ namespace GadgetWriter{
   }
 
 
-  GWriteSnap::GWriteSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int num_files,int idsize,  bool debug, bool format_2,std::vector<block_info> *BlockNamesIn) : npart(N_TYPE),num_files(num_files),debug(debug)
+  GWriteSnap::GWriteSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int num_files_in,int idsize,  bool debug, bool format_2,std::vector<block_info> *BlockNamesIn) : npart(N_TYPE),debug(debug)
   {
           std::valarray<uint32_t> npart_file(N_TYPE);
           std::vector<block_info>::iterator it, jt;
@@ -228,9 +228,10 @@ namespace GadgetWriter{
                         }
                 }
           }
+          num_files = num_files_in;
           //Set up npart
-          if(npart.size() < N_TYPE)
-                  npart[std::slice(0,npart.size(),1)] = npart_in;
+          if(npart_in.size() < N_TYPE)
+                  npart[std::slice(0,npart_in.size(),1)] = npart_in;
           else
                   npart = npart_in[std::slice(0,N_TYPE,1)];
           if(3*(npart.max()/num_files) > (1L<<31)/sizeof(float)){
