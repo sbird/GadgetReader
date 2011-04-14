@@ -210,7 +210,10 @@ namespace GadgetReader{
                   // which assumes that blocks are either fully present or not for a given particle type
                   if(!SetBlockTypes(c_info))
                         continue;
-                  //Append the current info to the map.
+                  //Append the current info to the map; if there are duplicates move ahead one.
+                  while(blocks.count(c_name) > 0){
+                          c_name[3]++;
+                  }
                   blocks[std::string(c_name)] = c_info;
           }
           return;
