@@ -62,6 +62,7 @@ test: PGIIhead btest
 	@echo "Any errors in PGIIhead output will be printed below:"
 	@diff PGIIhead_out.test PGIIhead_out.txt
 PGIIhead: PGIIhead.cpp librgad.so
+PosDump: PosDump.cpp librgad.so
 btest: btest.cpp librgad.so
 	$(CC) $(CFLAGS) $< -lboost_unit_test_framework ${LDFLAGS} -o $@
 
@@ -97,5 +98,5 @@ perl/_gadgetreader.so: perl/rgad_perl.cxx librgad.so perl
 
 perlbind: perl/_gadgetreader.so
 
-dist: Makefile README $(head) Doxyfile PGIIhead.cpp PGIIhead_out.txt btest.cpp read_utils.c gadgetreader.cpp gadgetreader.i test_g2_snap.0 test_g2_snap.1
+dist: Makefile README $(head) Doxyfile PGIIhead.cpp PGIIhead_out.txt btest.cpp read_utils.c gadgetreader.cpp gadgetreader.i test_g2_snap.0 test_g2_snap.1 PosDump.cpp
 	tar -czf GadgetReader.tar.gz $^

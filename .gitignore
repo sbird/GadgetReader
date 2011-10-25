@@ -1,6 +1,7 @@
 *.o
 .*.swp
 PGIIhead
+PosDump
 btest
 PGIIhead_out.test
 tags
