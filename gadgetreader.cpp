@@ -413,7 +413,8 @@ namespace GadgetReader{
         }
         //Read a chunk of particles from a file
         for(unsigned int i=0;i<file_maps.size(); i++){
-                uint32_t read_data,start_pos=0,npart_file;
+                uint32_t read_data,npart_file;
+                int64_t start_pos=0;
                 FILE *fd;
                 block_info cur_block;
                 //Get current block
