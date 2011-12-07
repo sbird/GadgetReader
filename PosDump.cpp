@@ -16,6 +16,7 @@
 
 #include "gadgetreader.hpp"
 #include <iostream>
+#include <sstream>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -29,66 +30,65 @@ int main(int argc, char* argv[]){
      double tot_mass=0;
      int i;
      char c;
-     char *indir=NULL,*gasfile=NULL,*dmfile=NULL;
-     FILE* output;
-     while((c = getopt(argc, argv, "i:g:d:h")) !=-1)
+     string filename,outfile;
+     char block[5]="\0\0\0\0";
+     while((c = getopt(argc, argv, "i:o:b:h")) !=-1)
      {
        switch(c)
        {
         case 'i':
-           indir=optarg;
+           filename=optarg;
            break;
-        case 'g':
-           gasfile=optarg;
+        case 'o':
+           outfile=optarg;
            break;
-        case 'd':
-           dmfile=optarg;
+        case 'b':
+           strncpy(block,optarg,4);
+           block[4]='\0';
            break;
         case 'h':
         case '?':
         default:
-           fprintf(stderr,"Usage: ./PosDump -i input-file -g file-for-gas-positions -d file-for-dm-positions\n");
+           fprintf(stderr,"Usage: ./PosDump -i input-file -o outputfile (will have type appended) -b block-to-extract\n");
    	   exit(1);
        }
      }
-     if(!indir || !gasfile || !dmfile){
-           fprintf(stderr,"Usage: ./PosDump -i input-file -g file-for-gas-positions -d file-for-dm-positions\n");
+     if(filename.length()==0 || outfile.length()==0 || !block){
+           fprintf(stderr,"Usage: ./PosDump -i input-file -o outputfile (will have type appended) -b block-to-extract\n");
    	   exit(1);
      }
 
-     string filename(indir);
      GSnap snap(filename);
      if(snap.GetNumFiles() < 1){
-             cout<<"Unable to load file. Probably does not exist"<<endl;
-             return 0;
+             cerr<<"Unable to load file. Probably does not exist"<<endl;
+             return 1;
      }
      printf("Total N_part = ");
      printf("%ld %ld %ld %ld %ld %ld\n", snap.GetNpart(0),snap.GetNpart(1),snap.GetNpart(2),snap.GetNpart(3), snap.GetNpart(4), snap.GetNpart(5));
-     float * gaspos=(float *) malloc(snap.GetNpart(0)*3*sizeof(float));
-     if(!gaspos){
-         fprintf(stderr,"Error allocating memory\n");
-         exit(1);
-     } 
-     snap.GetBlock("POS ",gaspos,snap.GetNpart(0),0, (1<<N_TYPE)-1-(1<<0));
-     if(!(output=fopen(gasfile,"w"))){
-             fprintf(stderr, "Error opening %s: %s\n",gasfile, strerror(errno));
+     if(!snap.IsBlock(block)){
+             cerr<<"Block "<<block<<" not found in file "<<filename<<endl;
+             return 1;
      }
-     fprintf(stderr,"Writing gas positions...\n");
-     fwrite(gaspos,sizeof(float),snap.GetNpart(0)*3,output);
-     fclose(output);
-     free(gaspos);
-     float * dmpos=(float *) malloc(snap.GetNpart(1)*3*sizeof(float));
-     if(!dmpos){
-         fprintf(stderr,"Error allocating memory\n");
-         exit(1);
-     } 
-     snap.GetBlock("POS ",dmpos,snap.GetNpart(1),0, (1<<N_TYPE)-1-(1<<1));
-     if(!(output=fopen(dmfile,"w"))){
-             fprintf(stderr, "Error opening %s: %s\n",dmfile, strerror(errno));
+
+     for(int type=0; type<N_TYPE; type++){ 
+           if(snap.GetNpart(type) < 1)
+               continue;
+           FILE* output;
+           float * data=(float *) malloc(snap.GetBlockSize(block,type));
+           if(!data){
+               fprintf(stderr,"Error allocating memory for type %d\n",type);
+               exit(1);
+           } 
+           stringstream typefile;
+           typefile<<outfile<<"_type_"<<type<<".txt";
+           if(!(output=fopen(typefile.str().c_str(),"w"))){
+                   cerr<<"Error opening "<<typefile<<": "<<strerror(errno)<<endl;
+           }
+           snap.GetBlock(block,data,snap.GetNpart(0),0, (1<<N_TYPE)-1-(1<<type));
+           cerr<<"Writing data for type "<<type<<endl;
+           fwrite(data,sizeof(float),snap.GetBlockSize(block,type)/sizeof(float),output);
+           fclose(output);
+           free(data);
      }
-     fprintf(stderr,"Writing dm positions...\n");
-     fwrite(dmpos,sizeof(float),snap.GetNpart(1)*3,output);   
-     fclose(output);
-     free(dmpos);
      return 0;
 }
