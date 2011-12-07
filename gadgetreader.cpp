@@ -371,13 +371,17 @@ namespace GadgetReader{
   }
 
   /*Get total size of a block in the snapshot, in bytes*/
-  int64_t GSnap::GetBlockSize(std::string BlockName)
+  int64_t GSnap::GetBlockSize(std::string BlockName, int type)
   {
         int64_t size=0;
         //Find total number of particles needed
         for(unsigned int i=0; i<file_maps.size(); i++)
-                if(file_maps[i].blocks.count(BlockName))
-                        size+=file_maps[i].blocks[BlockName].length;
+                if(file_maps[i].blocks.count(BlockName)){
+                        if(type > 0 && type < N_TYPE)
+                                size+=file_maps[i].header.npart[type]*file_maps[i].blocks[BlockName].partlen;
+                        else
+                                size+=file_maps[i].blocks[BlockName].length;
+                }
         return size;
   }
 

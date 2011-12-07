@@ -265,9 +265,9 @@ namespace GadgetReader{
                    * particles actually found instead of those the snapshot is reporting to exist*/
                   int64_t GetNpart(int type, bool found=false);
                   /** Get total size of a block in the snapshot, in bytes.
-                   * Useful for allocating memory.*/
-                  int64_t GetBlockSize(std::string BlockName);
-                 /** Get number of particles a block has data for, Same as GetBlockSize but divided by partlen */
+                   * Useful for allocating memory. -1 is all types*/
+                  int64_t GetBlockSize(std::string BlockName, int type=-1);
+                 /** Get number of particles a block has data for, Same as GetBlockSize with type=-1, but divided by partlen */
                   int64_t GetBlockParts(std::string BlockName);
                  /** Get a list of all blocks present in the snapshot, as a set. */
                   std::set<std::string> GetBlocks();
