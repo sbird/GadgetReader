@@ -37,7 +37,7 @@ PERLINC=-I/usr/lib/perl5/core_perl/CORE
 
 .PHONY: all clean test dist pybind bind
 
-all: librgad.so libwgad.so
+all: librgad.so libwgad.so PGIIhead PosDump
 
 librgad.so: librgad.so.1
 	ln -sf $< $@
@@ -67,7 +67,7 @@ btest: btest.cpp librgad.so
 	$(CC) $(CFLAGS) $< -lboost_unit_test_framework ${LDFLAGS} -o $@
 
 clean: 
-	-rm -f $(obj) PGIIhead btest librgad.so librgad.so.1
+	-rm -f $(obj) PGIIhead PosDump btest librgad.so librgad.so.1 libwgad.so libwgad.so.1
 cleanall: clean
 	-rm -Rf python perl doc
 
