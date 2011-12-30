@@ -65,6 +65,8 @@ namespace GadgetReader{
                 WARN("Implausible number of files supposedly in simulation set: %d\n",files_expected);
                 return;
         }
+        if(!BlockNames && !first_map.format_2 )
+               WARN("WARNING: Reading Gadget-I file using pre-computed\nblock order, which may not correspond to the actual order of your file!\n");
         //Put the information from the first file in
         file_maps.push_back(first_map);
         //Add the particles for this file to the totals
@@ -287,7 +289,6 @@ namespace GadgetReader{
                        swap_endian=true;
                   case 256:
                   //A Gadget-I format file with the header first.
-                       WARN("WARNING: Reading Gadget-I file using pre-computed\nblock order, which may not correspond to the actual order of your file!\n");
                        format_2=false;
                        break;
                   default:
