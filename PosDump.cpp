@@ -44,6 +44,11 @@ int main(int argc, char* argv[]){
            break;
         case 'b':
            strncpy(block,optarg,4);
+           for(i=0; i<4;i++){
+                   block[i]=toupper(block[i]);
+                   if(block[i] == '\0')
+                           block[i]=' ';
+           }
            block[4]='\0';
            break;
         case 'h':
