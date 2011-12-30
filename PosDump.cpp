@@ -17,7 +17,10 @@
 #include "gadgetreader.hpp"
 #include <iostream>
 #include <sstream>
-#include <stdint.h>
+#include <vector>
+#include <string>
+#include <fstream>
+#include <locale>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -26,13 +29,18 @@
 using namespace GadgetReader;
 using namespace std;
 
+/* Get a list of blocks from a file, with each file on a different line*/
+std::vector<std::string> get_blocks(std::string file);
+
 int main(int argc, char* argv[]){
      double tot_mass=0;
      int i;
      char c;
-     string filename,outfile;
+     string filename,outfile, blockfile;
      char block[5]="\0\0\0\0";
-     while((c = getopt(argc, argv, "i:o:b:h")) !=-1)
+     std::vector<std::string> *BlockNames=NULL;
+     std::vector<std::string> Blocks;
+     while((c = getopt(argc, argv, "i:o:b:if:h")) !=-1)
      {
        switch(c)
        {
@@ -51,10 +59,15 @@ int main(int argc, char* argv[]){
            }
            block[4]='\0';
            break;
+        case 'f':
+           blockfile=optarg;
+           Blocks=get_blocks(blockfile);
+           BlockNames=&Blocks;
+           break;
         case 'h':
         case '?':
         default:
-           fprintf(stderr,"Usage: ./PosDump -i input-file -o outputfile (will have type appended) -b block-to-extract\n");
+           fprintf(stderr,"Usage: ./PosDump -i input-file -o outputfile (will have type appended) -b block-to-extract -f list of blocks (optional)\n");
    	   exit(1);
        }
      }
@@ -62,13 +75,12 @@ int main(int argc, char* argv[]){
            fprintf(stderr,"Usage: ./PosDump -i input-file -o outputfile (will have type appended) -b block-to-extract\n");
    	   exit(1);
      }
-
-     GSnap snap(filename);
+     GSnap snap(filename,true,BlockNames);
      if(snap.GetNumFiles() < 1){
              cerr<<"Unable to load file. Probably does not exist"<<endl;
              return 1;
      }
-     printf("Total N_part = ");
+     printf("Dumping block %s. Total N_part = ", block);
      printf("%ld %ld %ld %ld %ld %ld\n", snap.GetNpart(0),snap.GetNpart(1),snap.GetNpart(2),snap.GetNpart(3), snap.GetNpart(4), snap.GetNpart(5));
      if(!snap.IsBlock(block)){
              cerr<<"Block "<<block<<" not found in file "<<filename<<endl;
@@ -96,4 +108,22 @@ int main(int argc, char* argv[]){
            free(data);
      }
      return 0;
+}
+
+/*Get a list of blocks from a file, where each line names a new block. # is a comment*/
+std::vector<std::string> get_blocks(std::string file)
+{
+        std::vector<std::string> Blocks;
+        ifstream in;
+        in.open(file.c_str());
+        while(in.good()){
+                string line,out(4,' ');
+                getline(in,line);
+                if(line.size() < 1 || line[0] == '#')
+                        continue;
+                for(int i=0; i<min((size_t) 4,line.size());i++)
+                        out[i]=toupper(line[i]);
+                Blocks.push_back(out);
+        }
+        return Blocks;
 }
