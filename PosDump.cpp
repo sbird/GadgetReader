@@ -101,7 +101,7 @@ int main(int argc, char* argv[]){
            if(!(output=fopen(typefile.str().c_str(),"w"))){
                    cerr<<"Error opening "<<typefile<<": "<<strerror(errno)<<endl;
            }
-           snap.GetBlock(block,data,snap.GetNpart(0),0, (1<<N_TYPE)-1-(1<<type));
+           snap.GetBlock(block,data,snap.GetNpart(type),0, (1<<N_TYPE)-1-(1<<type));
            cerr<<"Writing data for type "<<type<<endl;
            fwrite(data,sizeof(float),snap.GetBlockSize(block,type)/sizeof(float),output);
            fclose(output);
