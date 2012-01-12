@@ -195,8 +195,8 @@ namespace GadgetReader{
                    * Partlen is hardcoded to be 12 for POS and VEL and 4 otherwise. 
                    * A better detection method would be nice. 
                    * @param snap_filename the (base) filename. The trailing .0 is optional
-                   * @param debugf Whether runtime warnings are printed.
-                   * @param BlockNames A list of block names, for format 1 files where we can't autodetect. If NULL, 
+                   * @param debug Whether runtime warnings are printed.
+                   * @param BlockNames A list of block names, for format 1 files where we can't autodetect. If NULL,
                    * a default value is returned. */
                   GSnap(std::string snap_filename, bool debug=true, std::vector<std::string> *BlockNames=NULL);
                   /** Reads particles from a file block into the memory pointed to by block.

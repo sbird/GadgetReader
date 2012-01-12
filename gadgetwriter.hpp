@@ -17,9 +17,9 @@
 /** \namespace GadgetWriter
  *  Classes for writing Gadget files*/
 
-/** \mainpage 
- * \section intro_sec Introduction 
- * GadgetReader (librgad.so) is a small library 
+/** 
+ * \section intro_sec Writer 
+ * GadgetWriter (libwgad.so) is a small library 
  * for easily writing Gadget-1 and 2 formatted files. 
  *
  * \section req_sec Requirements
