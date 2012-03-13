@@ -98,5 +98,5 @@ perl/_gadgetreader.so: perl/rgad_perl.cxx librgad.so perl
 
 perlbind: perl/_gadgetreader.so
 
-dist: Makefile README $(head) Doxyfile PGIIhead.cpp PGIIhead_out.txt btest.cpp read_utils.c gadgetreader.cpp gadgetreader.i test_g2_snap.0 test_g2_snap.1 PosDump.cpp
+dist: Makefile README $(head) Doxyfile PGIIhead.cpp PGIIhead_out.txt btest.cpp read_utils.c gadgetreader.cpp gadgetreader.i test_g2_snap.0 test_g2_snap.1 PosDump.cpp gadgetwriter.cpp gadgetwriter.hpp
 	tar -czf GadgetReader.tar.gz $^
