@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <unistd.h>
 
 using namespace GadgetReader;
 using namespace std;
@@ -33,7 +34,6 @@ using namespace std;
 std::vector<std::string> get_blocks(std::string file);
 
 int main(int argc, char* argv[]){
-     double tot_mass=0;
      int i;
      char c;
      string filename,outfile, blockfile;
@@ -71,7 +71,7 @@ int main(int argc, char* argv[]){
    	   exit(1);
        }
      }
-     if(filename.length()==0 || outfile.length()==0 || !block){
+     if(filename.length()==0 || outfile.length()==0 || block[0]=='\0'){
            fprintf(stderr,"Usage: ./PosDump -i input-file -o outputfile (will have type appended) -b block-to-extract\n");
    	   exit(1);
      }
@@ -121,7 +121,7 @@ std::vector<std::string> get_blocks(std::string file)
                 getline(in,line);
                 if(line.size() < 1 || line[0] == '#')
                         continue;
-                for(int i=0; i<min((size_t) 4,line.size());i++)
+                for(unsigned int i=0; i<min((size_t) 4,line.size());i++)
                         out[i]=toupper(line[i]);
                 Blocks.push_back(out);
         }
