@@ -210,8 +210,10 @@ namespace GadgetReader{
                         c_info.length=extra_len;
                   // Set up the particle types in the block. This also is a heuristic,
                   // which assumes that blocks are either fully present or not for a given particle type
-                  if(!SetBlockTypes(c_info))
+                  if(!SetBlockTypes(c_info)){
+                        WARN("SetBlockTypes failed for block %s in file %s, length %lu\n",c_name,file,c_info.length);
                         continue;
+                  }
                   //Append the current info to the map; if there are duplicates move ahead one.
                   while(blocks.count(c_name) > 0){
                           c_name[3]++;
@@ -600,7 +602,7 @@ namespace GadgetReader{
         which assumes that blocks are either fully present or not for a given particle type */
         for (int i=0; i<N_TYPE; i++)
                 block.p_types[i] = false;
-        if ((int)block.length/block.partlen == total_file_part){
+        if ((int64_t)block.length/block.partlen == total_file_part){
                 for (int i=0; i<N_TYPE; i++)
                         block.p_types[i] = true;
                 return true;
@@ -640,7 +642,7 @@ namespace GadgetReader{
         //Blocks which contain four particle types
         for (int n=0; n<N_TYPE; n++){
                 for (int m=0; m<N_TYPE; m++){
-                    if ((int)block.length/block.partlen == total_file_part-header.npart[m]-header.npart[n]){
+                    if ((int64_t)block.length/block.partlen == total_file_part-header.npart[m]-header.npart[n]){
                         block.p_types[n] = false;
                         block.p_types[m] = false;
                         return true;
@@ -649,7 +651,7 @@ namespace GadgetReader{
         }
         //Blocks which contain five particle type
         for (int n=0; n<N_TYPE; n++){
-            if ((int)block.length/block.partlen == total_file_part - header.npart[n]){
+            if ((int64_t)block.length/block.partlen == total_file_part - header.npart[n]){
                 block.p_types[n] = false;
                 return true;
             }
