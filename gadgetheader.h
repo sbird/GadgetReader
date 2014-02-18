@@ -30,7 +30,7 @@
     /** Boolean to test the presence of feedback*/
     int32_t  flag_feedback;
     /** First 32-bits of total number of particles in the simulation*/
-    int32_t  npartTotal[N_TYPE];
+    uint32_t  npartTotal[N_TYPE];
     /** Boolean to test the presence of cooling */
     int32_t  flag_cooling;
     /** Number of files expected in this snapshot*/
@@ -49,7 +49,7 @@
     int32_t  flag_metals;
     /** Long word of the total number of particles in the simulation. 
      * At least one version of N-GenICs sets this to something entirely different. */
-    int32_t  NallHW[N_TYPE];
+    uint32_t  NallHW[N_TYPE];
     int32_t flag_entropy_instead_u;	/*!< flags that IC-file contains entropy instead of u */
     int32_t flag_doubleprecision;	/*!< flags that snapshot contains double-precision instead of single precision */
 
