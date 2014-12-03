@@ -67,7 +67,7 @@ btest: btest.cpp librgad.so
 	$(CC) $(CFLAGS) $< -lboost_unit_test_framework ${LDFLAGS} -o $@
 
 clean: 
-	-rm -f $(obj) PGIIhead PosDump btest librgad.so librgad.so.1 libwgad.so libwgad.so.1
+	-rm -f $(obj) gadgetwriter.o PGIIhead PosDump btest librgad.so librgad.so.1 libwgad.so libwgad.so.1
 cleanall: clean
 	-rm -Rf python perl doc
 
