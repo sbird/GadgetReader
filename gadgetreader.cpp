@@ -51,8 +51,6 @@ namespace GadgetReader{
         fclose(fd);
         //Read the first file
         GSnapFile first_map(first_file, debug,BlockNames);
-        if(first_map.GetNumBlocks() == 0)
-                return;
         //Set the global variables. 
         base_filename=first_file;
         //Take the ".0" from the end if needed.
@@ -60,18 +58,18 @@ namespace GadgetReader{
                 std::string::iterator it=base_filename.end();
                 base_filename.erase(it-2,it);
         }
-        files_expected=first_map.header.num_files;
-        if(files_expected < 1){
-                WARN("Implausible number of files supposedly in simulation set: %d\n",files_expected);
-                return;
-        }
-        if(!BlockNames && !first_map.format_2 )
-               WARN("WARNING: Reading Gadget-I file using pre-computed\nblock order, which may not correspond to the actual order of your file!\n");
         //Put the information from the first file in
         file_maps.push_back(first_map);
         //Add the particles for this file to the totals
         for(int j=0; j<N_TYPE; j++)
            npart[j]=file_maps[0].header.npart[j];
+        files_expected=first_map.header.num_files;
+        if(files_expected < 1 || files_expected > 999){
+                WARN("Implausible number of files supposedly in simulation set: %d\n",files_expected);
+                return;
+        }
+        if(!BlockNames && !first_map.format_2 )
+               WARN("WARNING: Reading Gadget-I file using pre-computed\nblock order, which may not correspond to the actual order of your file!\n");
         //Get the information for the other files.
         for(int i=1;i<files_expected;i++){
                 f_name c_name=base_filename;
