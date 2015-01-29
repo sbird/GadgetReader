@@ -487,11 +487,23 @@ namespace GadgetReader{
                         WARN("Could not open file %d of %lu, continuing\n",i,file_maps.size());
                         continue;
                 }
+                //Check whether need to swap endianness
+                bool swap_endian = file_maps[i].GetFormat() & 2;
                 //Seek to first particle
                 if(fseek(fd,start_pos,SEEK_SET) == -1)
                         WARN("Failed to seek\n");
                 //Read the data!
                 read_data=fread(((char *)block)+npart_read*cur_block.partlen,cur_block.partlen,npart_file,fd);
+                if(swap_endian){
+                    //Swap the endianness of the data.
+                    //If we have 1 64-bit entry (say, particle ID) swap it 64-bit wise.
+                    //FIXME: This will fail for, eg, 3D 64-bit entries.
+                    //Otherwise, swap it 32-bit wise.
+                    if (cur_block.partlen == 8)
+                        multi_endian_swap64((uint64_t *)block+npart_read*cur_block.partlen,npart_file);
+                    else
+                        multi_endian_swap((uint32_t *)block+npart_read*cur_block.partlen,npart_file*cur_block.partlen/4);
+                }
                 //Don't die if we read the wrong amount of data; maybe we can find it in the next file.
                 if(read_data !=npart_file)
                         WARN("Only read %u particles of %u from file %d\n",read_data,npart_file,i);
