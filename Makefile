@@ -63,7 +63,7 @@ test: PGIIhead btest
 PGIIhead: PGIIhead.cpp librgad.so
 PosDump: PosDump.cpp librgad.so
 btest: btest.cpp librgad.so
-	$(CC) $(CFLAGS) $< -lboost_unit_test_framework ${LDFLAGS} -o $@
+	$(CXX) $(CFLAGS) $< ${LDFLAGS} -lboost_unit_test_framework -o $@
 
 clean: 
 	-rm -f $(obj) gadgetwriter.o PGIIhead PosDump btest librgad.so librgad.so.1 libwgad.so libwgad.so.1
