@@ -17,6 +17,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+//Swap the endianness of the header correctly.
+//doubles need endian swapping differently to ints.
+void header_endian_swap(gadget_header * header)
+{
+    //Pointer to start of header
+    void * ptr = (void *) &(header->npart[0]);
+    //npart.
+    ptr = multi_endian_swap((uint32_t *)ptr, 6);
+    //mass array, redshift and time.
+    ptr = multi_endian_swap64((uint64_t *)ptr, 8);
+    //Various flags
+    ptr = multi_endian_swap((uint32_t *)ptr, 10);
+    //cosmology
+    ptr = multi_endian_swap64((uint64_t *)ptr, 4);
+    //Remaining material
+    ptr = multi_endian_swap((uint32_t *)ptr, (sizeof(gadget_header)-11*4-12*8)/4);
+}
+
+
 /** \file 
  * GadgetReader library method file*/
 namespace GadgetReader{
@@ -158,7 +177,10 @@ namespace GadgetReader{
                                   WARN("Could not read HEAD in %s!\n",file);
                                   return;
                           }
-                          if(swap_endian) endian_swap(&record_size);
+                          if(swap_endian){
+                              endian_swap(&record_size);
+                              header_endian_swap(&header);
+                          }
                           if(record_size != sizeof(gadget_header)){
                                  WARN("Bad record size for HEAD in %s!\n",file);
                                  return;
