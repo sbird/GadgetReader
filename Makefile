@@ -25,7 +25,7 @@ LDFLAGS +=-Wl,-rpath,${CURDIR} -L${CURDIR} -lrgad
 OPTS = 
 PG = 
 CFLAGS += $(OPTS)
-obj=gadgetreader.o read_utils.o
+obj=gadgetreader.o
 head=read_utils.h gadgetreader.hpp gadgetheader.h
 #Include directories for python and perl.
 PYINC:=$(shell python-config --includes)
@@ -52,10 +52,9 @@ libwgad.so: libwgad.so.1
 libwgad.so.1: gadgetwriter.o
 	$(CC) -shared -Wl,-soname,$@ -o $@ $^
 
-gadgetreader.o: gadgetreader.cpp $(head) read_utils.o
+gadgetreader.o: gadgetreader.cpp $(head)
 gadgetwriter.o: gadgetwriter.cpp gadgetwriter.hpp gadgetheader.h
 
-read_utils.o: read_utils.c read_utils.h
 test: PGIIhead btest 
 	@./btest
 	@./PGIIhead test_g2_snap 1 > PGIIhead_out.test 2>/dev/null
@@ -98,5 +97,5 @@ perl/_gadgetreader.so: perl/rgad_perl.cxx librgad.so perl
 
 perlbind: perl/_gadgetreader.so
 
-dist: Makefile README $(head) Doxyfile PGIIhead.cpp PGIIhead_out.txt btest.cpp read_utils.c gadgetreader.cpp gadgetreader.i test_g2_snap.0 test_g2_snap.1 PosDump.cpp gadgetwriter.cpp gadgetwriter.hpp
+dist: Makefile README $(head) Doxyfile PGIIhead.cpp PGIIhead_out.txt btest.cpp gadgetreader.cpp gadgetreader.i test_g2_snap.0 test_g2_snap.1 PosDump.cpp gadgetwriter.cpp gadgetwriter.hpp
 	tar -czf GadgetReader.tar.gz $^

@@ -16,7 +16,7 @@
 
 #include <stdint.h>
 /** \file 
- * Contains multi_endian_swap() and endian_swap() */
+ * Contains routines to swap the enddianness of data. */
 
 #ifdef __cplusplus
 extern "C"{
@@ -35,10 +35,38 @@ inline uint32_t endian_swap(uint32_t* x)
     return *x;
 }
 
+/** Function to swap the enddianness of a 64-bit thing.
+ * @param x thing to swap*/
+inline uint64_t endian_swap_64(uint64_t* x)
+{
+     *x = (((*x & 0xff00000000000000ull) >> 56)
+		     | ((*x & 0x00ff000000000000ull) >> 40)
+		     | ((*x & 0x0000ff0000000000ull) >> 24)
+		     | ((*x & 0x000000ff00000000ull) >> 8)
+		     | ((*x & 0x00000000ff000000ull) << 8)
+		     | ((*x & 0x0000000000ff0000ull) << 24)
+		     | ((*x & 0x000000000000ff00ull) << 40)
+		     | ((*x & 0x00000000000000ffull) << 56));
+    return *x;
+}
+
+
 /** Swap the endianness of a range of integers
  * @param start Pointer to memory to start at.
  * @param range Range to swap, in bytes.*/
-void multi_endian_swap(uint32_t * start,int32_t range);
+uint32_t * multi_endian_swap(uint32_t * start,uint32_t range){
+        uint32_t* cur=start;
+        while(cur < start+range)
+          endian_swap(cur++);
+        return cur;
+}
+
+uint64_t * multi_endian_swap64(uint64_t * start,uint64_t range){
+        uint64_t* cur=start;
+        while(cur < start+range)
+          endian_swap_64(cur++);
+        return cur;
+}
 
 #ifdef __cplusplus
         }
