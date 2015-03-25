@@ -345,29 +345,50 @@ namespace GadgetWriter{
           std::valarray<uint32_t> npart_file(N_TYPE);
           std::vector<block_info>::iterator it, jt;
           //Auto-detect an HDF5 snapshot: if the desired filename ends in .hdf5, we want hdf5 output
+          bool hdf5 = false;
 #ifdef HAVE_HDF5
           std::size_t hdf5_ext = snap_filename.find(".hdf5");
-          bool hdf5 = (hdf5_ext != std::string::npos);
-          if (hdf5)
+          hdf5 = (hdf5_ext != std::string::npos);
+          if (hdf5){
+            std::cerr << "Using hdf5 snapshot for "<<snap_filename<<std::endl;
             snap_filename = snap_filename.substr(0,hdf5_ext);
+          }
 #endif
           //Set up some default BlockNames: every valid simulation must have these.
-          BlockNames.push_back(block_info("POS ",std::valarray<bool>(true,N_TYPE),3*sizeof(float)));
-          BlockNames.push_back(block_info("VEL ",std::valarray<bool>(true,N_TYPE),3*sizeof(float)));
-          BlockNames.push_back(block_info("ID  ",std::valarray<bool>(true,N_TYPE),idsize));
-          //By default MASS is given in the header (hence 0's) 
-          //but the user may wish to override it.
-          BlockNames.push_back(block_info("MASS",std::valarray<bool>(false,N_TYPE),sizeof(float)));
-          block_info u("U   ",std::valarray<bool>(false,N_TYPE),sizeof(float));
-          u.types[BARYON_TYPE]=true;
-          BlockNames.push_back(u);
+          //HDF5 has different defautl names
+          if (hdf5)
+          {
+                BlockNames.push_back(block_info("Coordinates",std::valarray<bool>(true,N_TYPE),3*sizeof(float)));
+                BlockNames.push_back(block_info("Velocities",std::valarray<bool>(true,N_TYPE),3*sizeof(float)));
+                BlockNames.push_back(block_info("ParticleIDs",std::valarray<bool>(true,N_TYPE),idsize));
+                //By default MASS is given in the header (hence 0's)
+                //but the user may wish to override it.
+                BlockNames.push_back(block_info("Masses",std::valarray<bool>(false,N_TYPE),sizeof(float)));
+                block_info u("InternalEnergy",std::valarray<bool>(false,N_TYPE),sizeof(float));
+                u.types[BARYON_TYPE]=true;
+                BlockNames.push_back(u);
+          }
+          else
+          {
+                BlockNames.push_back(block_info("POS ",std::valarray<bool>(true,N_TYPE),3*sizeof(float)));
+                BlockNames.push_back(block_info("VEL ",std::valarray<bool>(true,N_TYPE),3*sizeof(float)));
+                BlockNames.push_back(block_info("ID  ",std::valarray<bool>(true,N_TYPE),idsize));
+                //By default MASS is given in the header (hence 0's)
+                //but the user may wish to override it.
+                BlockNames.push_back(block_info("MASS",std::valarray<bool>(false,N_TYPE),sizeof(float)));
+                block_info u("U   ",std::valarray<bool>(false,N_TYPE),sizeof(float));
+                u.types[BARYON_TYPE]=true;
+                BlockNames.push_back(u);
+          }
           //Add the user-specified blocks, which override the defaults.
           //In case of conflict, later overrides earlier. 
           if(BlockNamesIn != NULL){
                 for(it=(*BlockNamesIn).begin(); it<(*BlockNamesIn).end(); ++it){
                         if( (*it).types.size() != N_TYPE )
                                 continue; //We don't want invalid blocks
-                        if( (*it).name == std::string("HEAD") )
+                        if( !hdf5 && ((*it).name == std::string("HEAD") ) )
+                                continue; //We don't want head blocks
+                        if( hdf5 && ((*it).name == std::string("Header") ) )
                                 continue; //We don't want head blocks
                         for(jt=BlockNames.begin();jt<=BlockNames.end();++jt){
                                 if(jt == BlockNames.end())
@@ -385,7 +406,7 @@ namespace GadgetWriter{
                   npart[std::slice(0,npart_in.size(),1)] = npart_in;
           else
                   npart = npart_in[std::slice(0,N_TYPE,1)];
-          if(3*(npart.max()/num_files) > (1L<<31)/sizeof(float)){
+          if((size_t) 3*(npart.max()/num_files) > (1L<<31)/sizeof(float)){
                   WARN("Not enough room for %ld particles in %d files\n",npart.max(),num_files);
                   num_files = 3*sizeof(float)*npart.max()/(1L<<31);
                   WARN("Increasing to %d files\n",num_files);
