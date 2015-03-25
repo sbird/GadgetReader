@@ -63,8 +63,8 @@ test: PGIIhead btest
 	@diff PGIIhead_out.test PGIIhead_out.txt
 PGIIhead: PGIIhead.cpp librgad.so
 PosDump: PosDump.cpp librgad.so
-Convert2HDF5: Convert2HDF5.cpp librgad.so
-	${CXX} $< ${LDFLAGS} -lhdf5 -lhdf5_hl -lwgad -o $@
+Convert2HDF5: Convert2HDF5.cpp librgad.so libwgad.so
+	${CXX} $(CFLAGS) $< ${LDFLAGS} -lhdf5 -lhdf5_hl -lwgad -o $@
 
 btest: btest.cpp librgad.so
 	$(CXX) $(CFLAGS) $< ${LDFLAGS} -lboost_unit_test_framework -o $@
