@@ -119,10 +119,6 @@ namespace GadgetWriter{
                 int write_block_footer(FILE * fd, std::string name, uint32_t blocksize);
   };
 
-#ifdef HAVE_HDF5
-
-#include <hdf5.h>
-
   class DLL_LOCAL GWriteHDFFile: public GBaseWriteFile{
          public:
                 GWriteHDFFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2, bool debug);
@@ -139,9 +135,8 @@ namespace GadgetWriter{
                 std::set<std::string> m_ints;
                 char get_block_type(std::string BlockName);
   };
-#endif //HAVE_HDF5
 
-#endif //SWIG
+  #endif //SWIG
 
   /** Main class for reading Gadget snapshots. */
   class DLL_PUBLIC GWriteSnap{

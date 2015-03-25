@@ -31,6 +31,7 @@ namespace GadgetWriter{
 
 #ifdef HAVE_HDF5
 
+#include <hdf5.h>
 #include <hdf5_hl.h>
 
   GWriteHDFFile::GWriteHDFFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2, bool debug) : GBaseWriteFile(filename, npart_in), debug(debug)
