@@ -51,7 +51,7 @@ int main(int argc, char* argv[]){
      std::valarray<int64_t> npart(N_TYPE);
      for (int i=0; i<N_TYPE; i++)
          npart[i] = snap.GetNpart(i);
-     GWriteSnap hdf5snap(outfile, npart);
+     GWriteSnap hdf5snap(outfile, npart, snap.GetNumFiles());
      hdf5snap.WriteHeaders(head);
      /*Now write some data types*/
      /*Initialise the map*/
@@ -69,6 +69,8 @@ int main(int argc, char* argv[]){
              else
                 blockdata =malloc(sizeof(float)*snap.GetBlockSize(*it,i));
              snap.GetBlock(*it,blockdata,snap.GetNpart(i),0,0);
+             if(verbose)
+                 cout<<"Converting type "<<i<<" block "<<*it<<" to "<<type_map[*it]<<endl;
              hdf5snap.WriteBlocks(type_map[*it], i, blockdata, snap.GetNpart(i), 0);
              free(blockdata);
          }
