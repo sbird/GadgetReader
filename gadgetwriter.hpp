@@ -43,6 +43,7 @@
 #include <valarray>
 #include <stdint.h>
 #include <stdio.h>
+#include <set>
 
 /* Include the file header structure*/
 #include "gadgetheader.h"
@@ -72,7 +73,7 @@ namespace GadgetWriter{
   class DLL_LOCAL GWriteFile{
          public:
                 GWriteFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2, bool debug);
-                //begin should specify which particle to begin at
+                // Begin should specify which particle to begin at
                 uint32_t WriteBlock(std::string BlockName, int type, void *data, int partlen, uint32_t np_write, uint32_t begin);
                 /** Note npart is silently ignored.*/
                 int WriteHeader(gadget_header head);
@@ -104,7 +105,35 @@ namespace GadgetWriter{
                 /**Function to write the block header; all else as write_block_header() */
                 int write_block_footer(FILE * fd, std::string name, uint32_t blocksize);
   };
-    
+
+#ifdef HAVE_HDF5
+
+#include <hdf5.h>
+
+  class DLL_LOCAL GWriteHDFFile {
+         public:
+                GWriteHDFFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2, bool debug);
+                //begin should specify which particle to begin at
+                uint32_t WriteBlock(std::string BlockName, int type, void *data, int partlen, uint32_t np_write, uint32_t begin);
+                /** Note npart is silently ignored.*/
+                int WriteHeader(gadget_header head);
+                uint32_t GetNPart(int type);
+         private:
+                //The file's actual name
+                std::string filename;
+                bool debug;
+                std::valarray<uint32_t> npart; //Number of particles in this file.
+                //For storing group names: PartType0, etc.
+                char g_name[N_TYPE][20];
+                //Go from Key = <BlockName> Value = <Type, start>
+                std::map<std::string,std::map<int, int64_t> > blocks;
+                /** Private function to find block datatype (int64 or float)*/
+                std::set<std::string> m_ints;
+                char get_block_type(std::string BlockName);
+                void get_block_shape(std::string BlockName, hsize_t size[]);
+  };
+#endif
+
 #endif
 
   /** Main class for reading Gadget snapshots. */

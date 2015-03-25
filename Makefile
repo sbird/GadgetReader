@@ -22,7 +22,8 @@ else
 endif
 CXXFLAGS += $(CFLAGS)
 LDFLAGS +=-Wl,-rpath,${CURDIR} -L${CURDIR} -lrgad
-OPTS = 
+#-lhdf5 -lhdf5_hl
+OPTS = -DHAVE_HDF5
 PG = 
 CFLAGS += $(OPTS)
 obj=gadgetreader.o
