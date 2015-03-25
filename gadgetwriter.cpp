@@ -35,8 +35,6 @@ namespace GadgetWriter{
 
   GWriteHDFFile::GWriteHDFFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2, bool debug) : GBaseWriteFile(filename, npart_in), debug(debug)
   {
-          for(int i=0; i< N_TYPE; i++)
-                  npart[i] = npart_in[i];
           //Create file
           hid_t hdf_file = H5Fcreate(filename.c_str(),H5F_ACC_EXCL,H5P_DEFAULT,H5P_DEFAULT);
           if(hdf_file < 0){
@@ -58,7 +56,6 @@ namespace GadgetWriter{
               if ((*it).partlen == sizeof(int64_t))
                   m_ints.insert((*it).name);
           }
-                  block_info block=(*it);
           return;
 
   }
@@ -174,8 +171,6 @@ namespace GadgetWriter{
 
   GWriteFile::GWriteFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2,bool debug) : GBaseWriteFile(filename, npart_in), format_2(format_2), debug(debug)
   {
-          for(int i=0; i< N_TYPE; i++)
-                  npart[i] = npart_in[i];
           header_size=sizeof(int32_t);
           if(format_2)
                   header_size+=3*sizeof(int32_t)+4*sizeof(char);
