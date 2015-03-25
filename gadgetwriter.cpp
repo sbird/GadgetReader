@@ -340,10 +340,17 @@ namespace GadgetWriter{
   }
 
 
-  GWriteSnap::GWriteSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int num_files_in,int idsize,  bool debug, bool format_2,bool hdf5, std::vector<block_info> *BlockNamesIn) : npart(N_TYPE),debug(debug)
+  GWriteSnap::GWriteSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int num_files_in,int idsize,  bool debug, bool format_2,std::vector<block_info> *BlockNamesIn) : npart(N_TYPE),debug(debug)
   {
           std::valarray<uint32_t> npart_file(N_TYPE);
           std::vector<block_info>::iterator it, jt;
+          //Auto-detect an HDF5 snapshot: if the desired filename ends in .hdf5, we want hdf5 output
+#ifdef HAVE_HDF5
+          std::size_t hdf5_ext = snap_filename.find(".hdf5");
+          bool hdf5 = (hdf5_ext != std::string::npos);
+          if (hdf5)
+            snap_filename = snap_filename.substr(0,hdf5_ext);
+#endif
           //Set up some default BlockNames: every valid simulation must have these.
           BlockNames.push_back(block_info("POS ",std::valarray<bool>(true,N_TYPE),3*sizeof(float)));
           BlockNames.push_back(block_info("VEL ",std::valarray<bool>(true,N_TYPE),3*sizeof(float)));
@@ -394,10 +401,13 @@ namespace GadgetWriter{
                 if(i == num_files -1) //Extra particles in the last file
                         for(unsigned int i=0; i<npart.size();++i)
                                 npart_file[i]+=npart[i] % num_files;
+#ifdef HAVE_HDF5
                 if (hdf5){
+                    filename+=".hdf5";
                     files.push_back(new GWriteHDFFile(filename,npart_file,&BlockNames,format_2,debug));
                 }
                 else
+#endif
                     files.push_back(new GWriteFile(filename,npart_file,&BlockNames,format_2,debug));
           }
           return;
