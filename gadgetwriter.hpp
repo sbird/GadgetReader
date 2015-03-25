@@ -66,32 +66,41 @@ namespace GadgetWriter{
   
   // The following are private structures that we don't want wrapped
 #ifndef SWIG 
-  
+
+    class DLL_LOCAL GBaseWriteFile {
+         public:
+                GBaseWriteFile(std::string filename, std::valarray<uint32_t> npart_in): filename(filename), npart(npart_in) {};
+                // Begin should specify which particle to begin at
+                virtual uint32_t WriteBlock(std::string BlockName, int type, void *data, int partlen, uint32_t np_write, uint32_t begin) =0;
+                /** Note npart is silently ignored.*/
+                virtual int WriteHeader(gadget_header head) =0;
+                uint32_t GetNPart(int type);
+                virtual ~GBaseWriteFile()=0;
+         protected:
+                //The file's actual name
+                std::string filename;
+                std::valarray<uint32_t> npart; //Number of particles in this file.
+  };
+
   /** This private structure stores information about each file. 
    * May change without warning, don't use it.
    */
-  class DLL_LOCAL GWriteFile{
+  class DLL_LOCAL GWriteFile: public GBaseWriteFile {
          public:
                 GWriteFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2, bool debug);
                 // Begin should specify which particle to begin at
                 uint32_t WriteBlock(std::string BlockName, int type, void *data, int partlen, uint32_t np_write, uint32_t begin);
                 /** Note npart is silently ignored.*/
                 int WriteHeader(gadget_header head);
-                uint32_t GetNPart(int type);
                 ~GWriteFile()
                 {
                         if(fd)
                            fclose(fd);
-                        return;
                 }
-
          private:
-                //The file's actual name
-                std::string filename;
                 bool format_2;
                 bool debug;
                 int header_size,footer_size;
-                std::valarray<uint32_t> npart; //Number of particles in this file.
                 FILE * fd;
                 //Go from Key = <BlockName> Value = <Type, start>
                 std::map<std::string,std::map<int, int64_t> > blocks;
@@ -110,7 +119,7 @@ namespace GadgetWriter{
 
 #include <hdf5.h>
 
-  class DLL_LOCAL GWriteHDFFile {
+  class DLL_LOCAL GWriteHDFFile: public GBaseWriteFile{
          public:
                 GWriteHDFFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2, bool debug);
                 //begin should specify which particle to begin at
@@ -118,6 +127,7 @@ namespace GadgetWriter{
                 /** Note npart is silently ignored.*/
                 int WriteHeader(gadget_header head);
                 uint32_t GetNPart(int type);
+                ~GWriteHDFFile(){};
          private:
                 //The file's actual name
                 std::string filename;
@@ -132,14 +142,14 @@ namespace GadgetWriter{
                 char get_block_type(std::string BlockName);
                 void get_block_shape(std::string BlockName, hsize_t size[]);
   };
-#endif
+#endif //HAVE_HDF5
 
-#endif
+#endif //SWIG
 
   /** Main class for reading Gadget snapshots. */
   class DLL_PUBLIC GWriteSnap{
           public:
-                  GWriteSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int num_files=1, int idsize=sizeof(int64_t),bool debug=true, bool format_2 = true, std::vector<block_info> *BlockNames=NULL);
+                  GWriteSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int num_files=1, int idsize=sizeof(int64_t),bool debug=true, bool format_2 = true, bool hdf5=false, std::vector<block_info> *BlockNames=NULL);
                   int64_t WriteBlocks(std::string BlockName, int type, void *data, int64_t np_write, int64_t begin);
                   //npart, num_files and friends silently ignored
                   int WriteHeaders(gadget_header head);
@@ -147,9 +157,16 @@ namespace GadgetWriter{
                   int GetNumFiles(){
                           return files.size();
                   }
+                  ~GWriteSnap()
+                  {
+                      std::vector<GBaseWriteFile *>::iterator it;
+                      for(it=files.begin(); it<files.end(); ++it)
+                            delete *it;
+                  }
+
           private:
                   /** Vector to store the maps of each simulation snapshot */
-                  std::vector<GWriteFile> files;
+                  std::vector<GBaseWriteFile *> files;
                   std::vector<block_info> BlockNames;
                   std::valarray<int64_t> npart;
                   int num_files;

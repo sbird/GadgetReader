@@ -33,7 +33,7 @@ namespace GadgetWriter{
 
 #include <hdf5_hl.h>
 
-  GWriteHDFFile::GWriteHDFFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2, bool debug) : filename(filename), debug(debug), npart(N_TYPE)
+  GWriteHDFFile::GWriteHDFFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2, bool debug) : GBaseWriteFile(filename, npart_in), debug(debug)
   {
           for(int i=0; i< N_TYPE; i++)
                   npart[i] = npart_in[i];
@@ -166,16 +166,13 @@ namespace GadgetWriter{
             return np_write;
   }
 
-  uint32_t GWriteHDFFile::GetNPart(int type)
-  {
-          if(type <0 || type > N_TYPE)
-                  return 0;
-          return npart[type];
-  }
-
 #endif
 
-  GWriteFile::GWriteFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2,bool debug) : filename(filename), format_2(format_2), debug(debug), npart(N_TYPE)
+    //Empty declaration to make linker happy
+   GBaseWriteFile::~GBaseWriteFile()
+   {}
+
+  GWriteFile::GWriteFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2,bool debug) : GBaseWriteFile(filename, npart_in), format_2(format_2), debug(debug)
   {
           for(int i=0; i< N_TYPE; i++)
                   npart[i] = npart_in[i];
@@ -308,7 +305,7 @@ namespace GadgetWriter{
           return total;
   }
 
-  uint32_t GWriteFile::GetNPart(int type)
+  uint32_t GBaseWriteFile::GetNPart(int type)
   {
           if(type <0 || type > N_TYPE)
                   return 0;
@@ -343,7 +340,7 @@ namespace GadgetWriter{
   }
 
 
-  GWriteSnap::GWriteSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int num_files_in,int idsize,  bool debug, bool format_2,std::vector<block_info> *BlockNamesIn) : npart(N_TYPE),debug(debug)
+  GWriteSnap::GWriteSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int num_files_in,int idsize,  bool debug, bool format_2,bool hdf5, std::vector<block_info> *BlockNamesIn) : npart(N_TYPE),debug(debug)
   {
           std::valarray<uint32_t> npart_file(N_TYPE);
           std::vector<block_info>::iterator it, jt;
@@ -397,14 +394,18 @@ namespace GadgetWriter{
                 if(i == num_files -1) //Extra particles in the last file
                         for(unsigned int i=0; i<npart.size();++i)
                                 npart_file[i]+=npart[i] % num_files;
-                files.push_back(GWriteFile(filename,npart_file,&BlockNames,format_2,debug));
+                if (hdf5){
+                    files.push_back(new GWriteHDFFile(filename,npart_file,&BlockNames,format_2,debug));
+                }
+                else
+                    files.push_back(new GWriteFile(filename,npart_file,&BlockNames,format_2,debug));
           }
           return;
 
   }
   int64_t GWriteSnap::WriteBlocks(std::string BlockName, int type, void *data, int64_t np_write, int64_t begin)
   {
-        std::vector<GWriteFile>::iterator it;
+        std::vector<GBaseWriteFile *>::iterator it;
         std::vector<block_info>::iterator jt;
         short partlen=0;
         uint32_t ret;
@@ -425,14 +426,14 @@ namespace GadgetWriter{
         }
         for(it=files.begin(); it<files.end(); ++it){
                 int64_t np_file=np_write;
-                if(begin > (*it).GetNPart(type)){
-                        begin-=(*it).GetNPart(type);
+                if(begin > (**it).GetNPart(type)){
+                        begin-=(**it).GetNPart(type);
                         continue;
                 }
-                if(np_file > (*it).GetNPart(type)-begin){
-                        np_file = (*it).GetNPart(type)-begin;
+                if(np_file > (**it).GetNPart(type)-begin){
+                        np_file = (**it).GetNPart(type)-begin;
                 }
-                ret=(*it).WriteBlock(BlockName, type, data, partlen, np_file, begin);
+                ret=(**it).WriteBlock(BlockName, type, data, partlen, np_file, begin);
                 if(ret != np_file)
                         return np_written+ret;
                 begin=0;
@@ -453,9 +454,9 @@ namespace GadgetWriter{
             head.NallHW[i] = ( npart[i] >> 32);
             head.npartTotal[i] = npart[i] - ((uint64_t)head.NallHW[i] << 32);
         }
-        std::vector<GWriteFile>::iterator it;
+        std::vector<GBaseWriteFile *>::iterator it;
         for(it=files.begin(); it<files.end(); ++it)
-                if((*it).WriteHeader(head))
+                if((**it).WriteHeader(head))
                         return 1;
         return 0;
   }
