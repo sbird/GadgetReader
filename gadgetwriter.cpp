@@ -346,7 +346,7 @@ namespace GadgetWriter{
           std::size_t hdf5_ext = snap_filename.find(".hdf5");
           hdf5 = (hdf5_ext != std::string::npos);
           if (hdf5){
-            std::cerr << "Using hdf5 snapshot for "<<snap_filename<<std::endl;
+//             std::cerr << "Using hdf5 snapshot for "<<snap_filename<<std::endl;
             snap_filename = snap_filename.substr(0,hdf5_ext);
           }
 #endif
