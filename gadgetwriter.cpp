@@ -37,7 +37,7 @@ namespace GadgetWriter{
   GWriteHDFFile::GWriteHDFFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2, bool debug) : GBaseWriteFile(filename, npart_in), debug(debug)
   {
           //Create file
-          hid_t hdf_file = H5Fcreate(filename.c_str(),H5F_ACC_EXCL,H5P_DEFAULT,H5P_DEFAULT);
+          hid_t hdf_file = H5Fcreate(filename.c_str(),H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
           if(hdf_file < 0){
               throw  std::ios_base::failure(std::string("Unable to create file: ")+filename);
           }
