@@ -138,25 +138,33 @@ namespace GadgetWriter{
             if (size[1] > 1) {
                     rank = 2;
             }
+            /* I don't totally understand why the below works (it is not clear to me from the documentation).
+             * I gleaned it from a posting to the HDF5 mailing list and a related stack overflow thread here:
+             * http://stackoverflow.com/questions/24883461/hdf5-updating-a-cell-in-a-table-of-integers
+             * http://lists.hdfgroup.org/pipermail/hdf-forum_lists.hdfgroup.org/2014-July/007966.html
+             * The important thing seems to be that we have a dataspace for the whole array and create a hyperslab on that dataspace.
+             * Then we need another dataspace with the size of the stuff we want to write.*/
+            //Make space in memory for the whole array
+            //Create a hyperslab that we will write to
+            size[0] = npart[type];
+            hid_t full_space_id = H5Screate_simple(rank, size, NULL);
             //If this is the first write, create the dataset
             if (begin==0) {
-                size[0] = npart[type];
-                hid_t space_id = H5Screate_simple(rank, size, NULL);
-                H5Dcreate(group,BlockName.c_str(),dtype, space_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-                H5Sclose(space_id);
+                H5Dcreate(group,BlockName.c_str(),dtype, full_space_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
             }
             hid_t dset = H5Dopen(group,BlockName.c_str(),H5P_DEFAULT);
             if (dset < 0)
                 return dset;
             size[0] = np_write;
-            hsize_t begins[2]={begin,0};
-            //Create a hyperslab that we will write to
             hid_t space_id = H5Screate_simple(rank, size, NULL);
+            hsize_t begins[2]={begin,0};
             //Select the hyperslab of elements we are about to write to
-            H5Sselect_hyperslab(space_id, H5S_SELECT_SET, begins, NULL, size, NULL);
+            H5Sselect_hyperslab(full_space_id, H5S_SELECT_SET, begins, NULL, size, NULL);
             /* Write to the dataset */
-            herr = H5Dwrite(dset, dtype, H5S_ALL, space_id, H5P_DEFAULT, data);
+            herr = H5Dwrite(dset, dtype, space_id, full_space_id, H5P_DEFAULT, data);
             H5Dclose(dset);
+            H5Sclose(space_id);
+            H5Sclose(full_space_id);
             H5Gclose(group);
             H5Fclose(handle);
             if (herr < 0)
