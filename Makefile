@@ -1,3 +1,5 @@
+#Comment this if you don't need HDF5
+OPTS = -DHAVE_HDF5
 ifeq ($(CC),cc)
   ICC:=$(shell which icc --tty-only 2>&1)
   #Can we find icc?
@@ -21,9 +23,12 @@ else
   CFLAGS += -Wall -O2  -g -fPIC
 endif
 CXXFLAGS += $(CFLAGS)
-LDFLAGS +=-Wl,-rpath,${CURDIR} -L${CURDIR} -lrgad
-#-lhdf5 -lhdf5_hl
-OPTS = -DHAVE_HDF5
+LDFLAGS +=-Wl,-rpath,${CURDIR},--no-add-needed,--as-needed -L${CURDIR} -lrgad
+ifeq ($(OPTS),-DHAVE_HDF5)
+	HDF_LINK = -lhdf5 -lhdf5_hl
+else
+	HDF_LINK =
+endif
 PG = 
 CFLAGS += $(OPTS)
 obj=gadgetreader.o
@@ -46,12 +51,12 @@ librgad.so: librgad.so.1
 librgad.so.1: $(obj)
 	$(CC) -shared -Wl,-soname,$@ -o $@  $^
 
-#Writer library. Note this is untested.
+#Writer library.
 libwgad.so: libwgad.so.1
 	ln -sf $< $@
 
 libwgad.so.1: gadgetwriter.o
-	$(CC) -shared -Wl,-soname,$@ -o $@ $^
+	$(CC) -shared -Wl,-soname,$@ $(HDF_LINK) -o $@ $^
 
 gadgetreader.o: gadgetreader.cpp $(head)
 gadgetwriter.o: gadgetwriter.cpp gadgetwriter.hpp gadgetheader.h
@@ -64,7 +69,7 @@ test: PGIIhead btest
 PGIIhead: PGIIhead.cpp librgad.so
 PosDump: PosDump.cpp librgad.so
 Convert2HDF5: Convert2HDF5.cpp librgad.so libwgad.so
-	${CXX} $(CFLAGS) $< ${LDFLAGS} -lhdf5 -lhdf5_hl -lwgad -o $@
+	${CXX} $(CFLAGS) $< ${LDFLAGS} -lwgad -o $@
 
 btest: btest.cpp librgad.so
 	$(CXX) $(CFLAGS) $< ${LDFLAGS} -lboost_unit_test_framework -o $@
