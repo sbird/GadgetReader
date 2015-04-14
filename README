@@ -6,6 +6,10 @@ To build the library, do:
 
 make
 
+If you wish to use the support for writing HDF5 snapshots, you will need the HDF5 
+development libraries (libhdf5-dev on ubuntu). If you do not wish to use this feature,
+comment out OPTS = -DHAVE_HDF5 on the first line of the Makefile
+
 For the test suite (requires Boost::Test > 1.34), do: 
 
 make test
@@ -22,9 +26,13 @@ To delete compiler output:
 
 make clean or make cleanall
 
-To build example program:
+To build example program which reads the header of a snapshot:
 
 make PGIIhead
+
+To build example program which converts gadget format to HDF5:
+
+make Convert2HDF5
 
 Note this embeds the current path of the library into the executable, so you will have a 
 linker error if you then move librgad.so to another directory. 
