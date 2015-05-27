@@ -31,6 +31,7 @@ int main(int argc, char* argv[]){
      gadget_header head;
      if(argc<2){
    		fprintf(stderr,"Usage: ./PGIIhead filename\n");
+   		fprintf(stderr,"./PGIIhead filename -v will label the header fields.\n");
    		exit(1);
      }
 
