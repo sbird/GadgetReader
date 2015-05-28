@@ -192,8 +192,13 @@ namespace GadgetReader{
                           continue;
                   }
                   //If POS or VEL block, 3 floats per particle.
-                  if(strncmp(c_name,"POS ",4)==0 || strncmp(c_name,"VEL ",4)==0)
-                      c_info.partlen=3*sizeof(float);
+                  if(strncmp(c_name,"POS ",4)==0 || strncmp(c_name,"VEL ",4)==0) {
+                      //Sometimes blocks are in double precision.
+                      if (c_info.length == 3*total_file_part*sizeof(double) )
+                          c_info.partlen = 3*sizeof(double);
+                      else
+                        c_info.partlen=3*sizeof(float);
+                  }
                   /*A heuristic to detect LongIDs. Won't always work.*/
                   else if(strncmp(c_name,"ID  ",4)==0){
                           if(c_info.length == total_file_part*sizeof(int32_t))
@@ -202,8 +207,12 @@ namespace GadgetReader{
                                 c_info.partlen=sizeof(int64_t);
                   }
                   //Otherwise one float per particle.
-                  else
-                      c_info.partlen=sizeof(float);
+                  else {
+                      if (c_info.length == total_file_part*sizeof(double) )
+                          c_info.partlen = sizeof(double);
+                      else
+                        c_info.partlen = sizeof(float);
+                  }
                   //Store the start of the data block
                   c_info.start_pos=ftell(fd);
                   /*Check for the case where the record size overflows an int.
