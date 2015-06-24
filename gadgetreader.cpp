@@ -16,6 +16,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <algorithm>
 
 //Swap the endianness of the header correctly.
 //doubles need endian swapping differently to ints.
@@ -122,9 +123,10 @@ namespace GadgetReader{
   //It ought to support endian swapped files as well as Gadget-I files.
    GSnapFile::GSnapFile(const f_name strfile, bool debug, std::vector<std::string>* BlockNames) : name(strfile),debug(debug)
   {
-          #define N_BLOCKS 12
           //Default ordering of blocks for Gadget-I files
-          const char *default_blocks[N_BLOCKS]={"HEAD","POS ","VEL ","ID  ","MASS","U   ","RHO ","NE  ","NH  ","NHE ","HSML","SFR "};
+          //The odd double declaration of a string array is to work around lack of initialiser lists in C++ 98.
+          const char * default_blocks_char[12] = {"HEAD","POS ","VEL ","ID  ","MASS","U   ","RHO ","NE  ","NH  ","NHE ","HSML","SFR "};
+          std::vector<std::string> default_blocks(default_blocks_char, default_blocks_char+12);
           unsigned int cur_block=0;
           FILE * fd; 
           uint32_t record_size;
@@ -152,12 +154,12 @@ namespace GadgetReader{
                      * and read the name from a pre-guessed table, 
                      * or a user-supplied input table,
                      * or just make something up if all else fails.*/
-                    if(BlockNames == NULL && cur_block< N_BLOCKS)
-                                    strncpy(c_name, default_blocks[cur_block++],5);
+                    if(BlockNames == NULL && cur_block< default_blocks.size())
+                                    strncpy(c_name, default_blocks[cur_block++].c_str(),5);
                     else if(BlockNames != NULL && cur_block< (*BlockNames).size())
                             strncpy(c_name, (*BlockNames)[cur_block++].c_str(),5);
                     else
-                            c_name[0]=(char) 65-N_BLOCKS+cur_block;
+                            c_name[0]=(char) 65-default_blocks.size()+cur_block;
                     /* Read the length from the record length*/
                     if(fread(&record_size,sizeof(uint32_t),1,fd)!=1)
                             break;//out of file
@@ -188,6 +190,22 @@ namespace GadgetReader{
                           /*Set the total_file_part local variable*/
                           for(int i=0; i<N_TYPE; i++)
                                   total_file_part+=header.npart[i];
+                          //If using format 1 and the mass is in the header block, skip the mass block.
+                          if(!format_2){
+                            bool all_masses_in_header = true;
+                            //Check that all masses are in the header
+                            for(int i=0; i<N_TYPE; i++){
+                                if(header.mass[i] == 0 && header.npart[i] > 0){
+                                    all_masses_in_header = false;
+                                }
+                            }
+                            //If so, remove the mass block from the default list
+                            if(all_masses_in_header) {
+                                std::vector<std::string>::iterator it = std::find(default_blocks.begin(), default_blocks.end(),"MASS");
+                                if(it != default_blocks.end())
+                                    default_blocks.erase(it);
+                            }
+                          }
                           //Next block
                           continue;
                   }
