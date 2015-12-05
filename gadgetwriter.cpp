@@ -359,9 +359,10 @@ namespace GadgetWriter{
           }
 #endif
           //Set up some default BlockNames: every valid simulation must have these.
-          //HDF5 has different defautl names
+          //HDF5 has different default names
           if (hdf5)
           {
+                format=3;
                 BlockNames.push_back(block_info("Coordinates",std::valarray<bool>(true,N_TYPE),3*sizeof(float)));
                 BlockNames.push_back(block_info("Velocities",std::valarray<bool>(true,N_TYPE),3*sizeof(float)));
                 BlockNames.push_back(block_info("ParticleIDs",std::valarray<bool>(true,N_TYPE),idsize));
@@ -374,6 +375,7 @@ namespace GadgetWriter{
           }
           else
           {
+                format = 1 + format_2;
                 BlockNames.push_back(block_info("POS ",std::valarray<bool>(true,N_TYPE),3*sizeof(float)));
                 BlockNames.push_back(block_info("VEL ",std::valarray<bool>(true,N_TYPE),3*sizeof(float)));
                 BlockNames.push_back(block_info("ID  ",std::valarray<bool>(true,N_TYPE),idsize));

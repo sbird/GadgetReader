@@ -150,6 +150,10 @@ namespace GadgetWriter{
                   int GetNumFiles(){
                           return files.size();
                   }
+                  //Returns the format. 1== Gadget-1, 2==Gadget-2, 3==HDF5.
+                  int GetFormat(){
+                      return format;
+                  }
                   ~GWriteSnap()
                   {
                       std::vector<GBaseWriteFile *>::iterator it;
@@ -163,6 +167,7 @@ namespace GadgetWriter{
                   std::vector<block_info> BlockNames;
                   std::valarray<int64_t> npart;
                   int num_files;
+                  int format;
                   /** Flag to control whether WARN prints anything */
                   bool debug;
   };
