@@ -422,9 +422,12 @@ namespace GadgetWriter{
           for(int i=0; i<num_files; i++){
                 //Next two lines are a somewhat over-engineered way of converting
                 //an integer to a string
-                std::ostringstream s;
-                s<<i;
-                std::string filename=snap_filename+"."+s.str();
+                std::string filename=snap_filename;
+                if(num_files > 1){
+                    std::ostringstream s;
+                    s<<i;
+                    filename+="."+s.str();
+                }
                 if(i == num_files -1) //Extra particles in the last file
                         for(unsigned int i=0; i<npart.size();++i)
                                 npart_file[i]+=npart[i] % num_files;
