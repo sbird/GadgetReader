@@ -65,8 +65,14 @@
                                        All other values, including 0 are interpreted as "don't know" for backwards compatability.
                                    */
     float lpt_scalingfactor;      /*!< scaling factor for 2lpt initial conditions */
+    /*Flags for the units system*/
+    double UnitLength_in_cm;
+    double UnitMass_in_g;
+    double UnitVelocity_in_cm_per_s;
+    /*OmegaBaryon*/
+    double OmegaB;
       /** Fills header to 256 Bytes */
-    char     fill[256- N_TYPE*sizeof(uint32_t)- (6+N_TYPE)*sizeof(double)- (9+2*N_TYPE)*sizeof(int32_t)-sizeof(float)];  
+    char     fill[256- N_TYPE*sizeof(uint32_t)- (10+N_TYPE)*sizeof(double)- (9+2*N_TYPE)*sizeof(int32_t)-sizeof(float)];
   } gadget_header;
  
 #endif
