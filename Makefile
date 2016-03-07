@@ -1,5 +1,7 @@
 #Comment this if you don't need HDF5
 OPTS = -DHAVE_HDF5
+#Comment this if you don't need bigfile output
+#OPTS += -DHAVE_BIGFILE
 ifeq ($(CC),cc)
   ICC:=$(shell which icc --tty-only 2>&1)
   #Can we find icc?
@@ -55,11 +57,13 @@ librgad.so.1: $(obj)
 libwgad.so: libwgad.so.1
 	ln -sf $< $@
 
-libwgad.so.1: gadgetwriter.o
+libwgad.so.1: gadgetwriter.o gadgetwritebigfile.o gadgetwritehdf.o gadgetwriteoldgadget.o
 	$(CC) -shared -Wl,-soname,$@ $(HDF_LINK) -o $@ $^
 
+%.o: %.cpp gadgetwritefile.hpp
+
 gadgetreader.o: gadgetreader.cpp $(head)
-gadgetwriter.o: gadgetwriter.cpp gadgetwriter.hpp gadgetheader.h
+gadgetwriter.o: gadgetwriter.cpp gadgetwriter.hpp gadgetheader.h gadgetwritefile.hpp
 
 test: PGIIhead btest 
 	@./btest
