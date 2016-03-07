@@ -87,7 +87,7 @@ namespace GadgetWriter{
             return 0;
   }
 
-  uint32_t GWriteHDFFile::WriteBlock(std::string BlockName, int type, void *data, int partlen, uint32_t np_write, uint32_t begin)
+  int64_t GWriteHDFFile::WriteBlock(std::string BlockName, int type, void *data, int partlen, uint32_t np_write, uint32_t begin)
   {
             herr_t herr;
             hid_t handle = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);

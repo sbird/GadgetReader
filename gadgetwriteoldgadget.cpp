@@ -1,5 +1,6 @@
 /* Class specialising to the gadget binary format*/
 #include "gadgetwritefile.hpp"
+#include <cassert>
 
 namespace GadgetWriter{
   GWriteFile::GWriteFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2,bool debug) : GBaseWriteFile(filename, npart_in), format_2(format_2), debug(debug)
@@ -22,6 +23,7 @@ namespace GadgetWriter{
                WARN("Can't open '%s' for writing!\n", filename.c_str());
                return 1;
         }
+        assert(sizeof(head) == 256);
         fseek(fd,0,SEEK_SET); //Header always at start of file
         if(write_block_header(fd, "HEAD", sizeof(head)) || 
                 fwrite(&head, sizeof(head), 1, fd)!=1 ||
@@ -32,9 +34,8 @@ namespace GadgetWriter{
         return 0;
   }
 
-  uint32_t GWriteFile::WriteBlock(std::string BlockName, int type, void *data, int partlen, uint32_t np_write, uint32_t begin)
+  int64_t GWriteFile::WriteBlock(std::string BlockName, int type, void *data, int partlen, uint32_t np_write, uint32_t begin)
   {
-          uint32_t ret;
           if((int64_t) np_write+begin > npart[type]){
                   WARN("Not enough room for %ld particles of type %d\n",(int64_t)np_write+begin,type);
                   WARN("Block %s, file %s. Truncated to %d particles\n",BlockName.c_str(), filename.c_str(),npart[type]);
@@ -69,9 +70,9 @@ namespace GadgetWriter{
                         init_fpos+=header_size;
                 fseek(fd,init_fpos, SEEK_SET);
           }
-          ret=fwrite(data, partlen, np_write, fd);
+          int64_t ret=fwrite(data, partlen, np_write, fd);
           if(ret != np_write){
-                  WARN("Wrote only %d particles of %d\n",ret,np_write);
+                  WARN("Wrote only %ld particles of %d\n",ret,np_write);
                   return ret;
           }
           //If this is the last write to this segment, write the footer and close the file

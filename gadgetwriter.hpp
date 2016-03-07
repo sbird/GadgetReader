@@ -75,7 +75,7 @@ namespace GadgetWriter{
                         npart[i] = npart_in[i];
                 };
                 // Begin should specify which particle to begin at
-                virtual uint32_t WriteBlock(std::string BlockName, int type, void *data, int partlen, uint32_t np_write, uint32_t begin) =0;
+                virtual int64_t WriteBlock(std::string BlockName, int type, void *data, int partlen, uint32_t np_write, uint32_t begin) =0;
                 /** Note npart is silently ignored.*/
                 virtual int WriteHeader(gadget_header head) =0;
                 uint32_t GetNPart(int type);

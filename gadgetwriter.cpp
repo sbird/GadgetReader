@@ -13,7 +13,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 #include "gadgetwriter.hpp"
 #include "gadgetwritefile.hpp"
-#include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
 #include <sstream>

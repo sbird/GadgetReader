@@ -19,7 +19,7 @@ namespace GadgetWriter{
          public:
                 GWriteFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2, bool debug);
                 // Begin should specify which particle to begin at
-                uint32_t WriteBlock(std::string BlockName, int type, void *data, int partlen, uint32_t np_write, uint32_t begin);
+                int64_t WriteBlock(std::string BlockName, int type, void *data, int partlen, uint32_t np_write, uint32_t begin);
                 /** Note npart is silently ignored.*/
                 int WriteHeader(gadget_header head);
                 ~GWriteFile()
@@ -51,7 +51,7 @@ namespace GadgetWriter{
          public:
                 GWriteHDFFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2, bool debug);
                 //begin should specify which particle to begin at
-                uint32_t WriteBlock(std::string BlockName, int type, void *data, int partlen, uint32_t np_write, uint32_t begin);
+                int64_t WriteBlock(std::string BlockName, int type, void *data, int partlen, uint32_t np_write, uint32_t begin);
                 /** Note npart is silently ignored.*/
                 int WriteHeader(gadget_header head);
                 ~GWriteHDFFile(){};
@@ -67,16 +67,20 @@ namespace GadgetWriter{
 #endif
 
 #ifdef HAVE_BIGFILE
+
+#include "bigfile.h"
+
 /*Specialise to Bigfile: https://github.com/rainwoodman/bigfile*/
-  class DLL_LOCAL GWriteBigFile: public GBaseWriteFile{
+class DLL_LOCAL GWriteBigFile: public GBaseWriteFile{
          public:
                 GWriteBigFile(std::string filename, std::valarray<uint32_t> npart_in, std::vector<block_info>* BlockNames, bool format_2, bool debug);
                 //begin should specify which particle to begin at
-                uint32_t WriteBlock(std::string BlockName, int type, void *data, int partlen, uint32_t np_write, uint32_t begin);
+                int64_t WriteBlock(std::string BlockName, int type, void *data, int partlen, uint32_t np_write, uint32_t begin);
                 /** Note npart is silently ignored.*/
                 int WriteHeader(gadget_header head);
                 ~GWriteBigFile(){};
          private:
+                BigFile bf;
                 bool debug;
                 //For storing group names: PartType0, etc.
                 char g_name[N_TYPE][20];
