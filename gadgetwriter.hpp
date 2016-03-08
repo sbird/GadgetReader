@@ -117,7 +117,7 @@ namespace GadgetWriter{
   };
 
   /** Main class for reading Gadget snapshots. */
-  class DLL_PUBLIC GWriteSnap : GWriteBaseSnap {
+  class DLL_PUBLIC GWriteSnap : public GWriteBaseSnap {
           public:
                   /** Base constructor. If you want an HDF5 snapshot, pass a filename ending in .hdf5 */
                   GWriteSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int num_files=1, int idsize=sizeof(int64_t),bool debug=true, bool format_2 = true, std::vector<block_info> *BlockNames=NULL);
