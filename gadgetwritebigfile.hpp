@@ -12,7 +12,7 @@ namespace GadgetWriter {
   class GWriteBigSnap {
           public:
                   /** Base constructor. If you want an HDF5 snapshot, pass a filename ending in .hdf5 */
-                  GWriteBigSnap(std::string snap_filename, std::valarray<int64_t> npart_in,bool debug=true);
+                  GWriteBigSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int NumFiles, bool debug=true);
                   int64_t WriteBlock(std::string& BlockName, int type, void *data, const char * dtype, int items_per_particle, uint64_t np_write, uint64_t begin);
                   //Note the value of npart used is that from npart_in, not the header.
                   int WriteHeaders(gadget_header head);

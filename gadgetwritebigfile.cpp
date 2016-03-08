@@ -10,8 +10,8 @@
 
 namespace GadgetWriter {
 
-  GWriteBigSnap::GWriteBigSnap(std::string snap_filename, std::valarray<int64_t> npart_in,bool debug) : 
-      npart(npart_in), NumFiles(1)
+  GWriteBigSnap::GWriteBigSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int NumFiles, bool debug) :
+      npart(npart_in), NumFiles(NumFiles)
   {
           //Create file
           if(0 != big_file_mpi_create(&bf, snap_filename.c_str(), MPI_COMM_WORLD)) {
