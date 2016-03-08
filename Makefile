@@ -29,7 +29,7 @@ ifeq (HAVE_HDF5,$(findstring HAVE_HDF5,${OPTS}))
 else
 	HDF_LINK =
 endif
-BGFL_LINK = -Lbigfile/src -lbigfile-mpi
+BGFL_LINK = -Lbigfile/src -lbigfile -lbigfile-mpi
 BGFL_INC = -Ibigfile/src
 
 PG = 
@@ -46,7 +46,7 @@ PERLINC=-I/usr/lib/perl5/core_perl/CORE
 
 .PHONY: all clean test dist pybind bind
 
-all: librgad.so libwgad.so libwbfgad.so PGIIhead PosDump Convert2HDF5
+all: bigfile/src/bigfile-mpi.a librgad.so libwgad.so PGIIhead PosDump Convert2HDF5
 
 librgad.so: librgad.so.1
 	ln -sf $< $@
@@ -55,25 +55,18 @@ librgad.so.1: $(obj)
 	$(CC) -shared -Wl,-soname,$@ -o $@  $^
 
 bigfile/src/bigfile-mpi.a:
-	cd ./bigfile/src; make
-
-libwbfgad.so: libwbfgad.so.0 bigfile/src/bigfile-mpi.a
-	ln -sf $< $@
+	cd ./bigfile/src; CFLAGS=-fPIC make
 
 #Writer library.
 libwgad.so: libwgad.so.1
 	ln -sf $< $@
 
-libwgad.so.1: gadgetwriter.o gadgetwritehdf.o gadgetwriteoldgadget.o
-	$(CC) -shared -Wl,-soname,$@ $(HDF_LINK) -o $@ $^
+libwgad.so.1: gadgetwriter.o gadgetwritehdf.o gadgetwriteoldgadget.o gadgetwritebigfile.o
+	mpic++ -shared -Wl,-soname,$@ $(HDF_LINK) -o $@ $^ $(BGFL_LINK)
 
-%.o: %.cpp gadgetwritefile.hpp
-
-libwbfgad.so.0: gadgetwritebigfile.cpp gadgetwritebigfile.hpp gadgetheader.h
-	mpic++ $(CFLAGS) -shared -Wl,-soname,$@ $(BGFL_LINK) -o $@  $^
+%.o: %.cpp %.hpp gadgetheader.h gadgetwritefile.hpp
 
 gadgetreader.o: gadgetreader.cpp $(head)
-gadgetwriter.o: gadgetwriter.cpp gadgetwriter.hpp gadgetheader.h gadgetwritefile.hpp
 
 test: PGIIhead btest 
 	@./btest
@@ -89,7 +82,7 @@ btest: btest.cpp librgad.so
 	$(CXX) $(CFLAGS) $< ${LDFLAGS} -lboost_unit_test_framework -o $@
 
 clean: 
-	-rm -f $(obj) gadgetwriter.o PGIIhead PosDump btest librgad.so librgad.so.1 libwgad.so libwgad.so.1 libwbfgad.so libwbfgad.so.0
+	-rm *.o PGIIhead PosDump btest librgad.so librgad.so.1 libwgad.so libwgad.so.1
 cleanall: clean
 	-rm -Rf python perl doc
 
