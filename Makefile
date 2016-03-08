@@ -1,7 +1,5 @@
 #Comment this if you don't need HDF5
 OPTS = -DHAVE_HDF5
-#Comment this if you don't need bigfile output
-OPTS += -DHAVE_BIGFILE
 ifeq ($(CC),cc)
   ICC:=$(shell which icc --tty-only 2>&1)
   #Can we find icc?
@@ -31,12 +29,8 @@ ifeq (HAVE_HDF5,$(findstring HAVE_HDF5,${OPTS}))
 else
 	HDF_LINK =
 endif
-ifeq (HAVE_BIGFILE,$(findstring HAVE_BIGFILE,${OPTS}))
-	BGFL_LINK = -Lbigfile/lib -lbigfile 
-	BGFL_INC = -Ibigfile/include
-else
-	BGFL_LINK =
-endif
+BGFL_LINK = -Lbigfile/src -lbigfile-mpi
+BGFL_INC = -Ibigfile/src
 
 PG = 
 CFLAGS += $(OPTS) $(BGFL_INC)
@@ -60,7 +54,10 @@ librgad.so: librgad.so.1
 librgad.so.1: $(obj)
 	$(CC) -shared -Wl,-soname,$@ -o $@  $^
 
-libwbfgad.so: libwbfgad.so.0
+bigfile/src/bigfile-mpi.a:
+	cd ./bigfile/src; make
+
+libwbfgad.so: libwbfgad.so.0 bigfile/src/bigfile-mpi.a
 	ln -sf $< $@
 
 #Writer library.
@@ -73,7 +70,7 @@ libwgad.so.1: gadgetwriter.o gadgetwritehdf.o gadgetwriteoldgadget.o
 %.o: %.cpp gadgetwritefile.hpp
 
 libwbfgad.so.0: gadgetwritebigfile.cpp gadgetwritebigfile.hpp gadgetheader.h
-	mpic++ $(CFLAGS) -shared -Wl,-soname,$@ -o $@  $^
+	mpic++ $(CFLAGS) -shared -Wl,-soname,$@ $(BGFL_LINK) -o $@  $^
 
 gadgetreader.o: gadgetreader.cpp $(head)
 gadgetwriter.o: gadgetwriter.cpp gadgetwriter.hpp gadgetheader.h gadgetwritefile.hpp
