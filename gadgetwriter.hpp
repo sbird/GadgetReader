@@ -96,7 +96,6 @@ namespace GadgetWriter{
                   GWriteBaseSnap(int format, std::valarray<int64_t> npart_in,int num_files=1, bool debug=true) :
                       npart(npart_in), num_files(num_files), debug(debug)
                   {}
-                  virtual int64_t WriteBlocks(std::string BlockName, int type, void *data, int64_t np_write, int64_t begin) = 0;
                   virtual int WriteHeaders(gadget_header head) = 0;
                   /** Get the number of files */
                   int GetNumFiles() {
