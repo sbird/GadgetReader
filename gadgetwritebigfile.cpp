@@ -40,7 +40,7 @@ namespace GadgetWriter {
       ret |= big_block_set_attr(&bheader, "Time", &header.time, "f8", 1);
       ret |= big_block_set_attr(&bheader, "Redshift", &header.redshift, "f8", 1);
       ret |= big_block_set_attr(&bheader, "BoxSize", &header.BoxSize, "f8", 1);
-      ret |= big_block_set_attr(&bheader, "OmegaM", &header.Omega0, "f8", 1);
+      ret |= big_block_set_attr(&bheader, "Omega0", &header.Omega0, "f8", 1);
       ret |= big_block_set_attr(&bheader, "OmegaB", &header.OmegaB, "f8", 1);
       ret |= big_block_set_attr(&bheader, "OmegaL", &header.OmegaLambda, "f8", 1);
       ret |= big_block_set_attr(&bheader, "HubbleParam", &header.HubbleParam, "f8", 1);
