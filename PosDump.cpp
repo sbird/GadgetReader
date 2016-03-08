@@ -99,7 +99,7 @@ int main(int argc, char* argv[]){
            stringstream typefile;
            typefile<<outfile<<"_type_"<<type<<".txt";
            if(!(output=fopen(typefile.str().c_str(),"w"))){
-                   cerr<<"Error opening "<<typefile<<": "<<strerror(errno)<<endl;
+                   cerr<<"Error opening "<<typefile.str()<<": "<<strerror(errno)<<endl;
            }
            snap.GetBlock(block,data,snap.GetNpart(type),0, (1<<N_TYPE)-1-(1<<type));
            cerr<<"Writing data for type "<<type<<endl;
