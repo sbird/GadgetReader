@@ -80,6 +80,9 @@ namespace GadgetWriter{
             herr = H5LTset_attribute_int(handle, "Header", "Flag_Feedback", &header.flag_feedback, 1);
             herr = H5LTset_attribute_int(handle, "Header", "Flag_DoublePrecision", &header.flag_doubleprecision, 1);
             herr = H5LTset_attribute_int(handle, "Header", "Flag_IC_Info", &header.flag_ic_info, 1);
+            herr = H5LTset_attribute_double(handle, "Header", "UnitLength_in_cm", &header.UnitLength_in_cm, 1);
+            herr = H5LTset_attribute_double(handle, "Header", "UnitMass_in_g", &header.UnitMass_in_g, 1);
+            herr = H5LTset_attribute_double(handle, "Header", "UnitVelocity_in_cm_per_s", &header.UnitVelocity_in_cm_per_s, 1);
             if (herr < 0)
                 return -1*herr;
             H5Gclose(hdgrp);
