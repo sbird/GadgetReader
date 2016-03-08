@@ -3,7 +3,7 @@
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
@@ -11,16 +11,16 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
-/** \file 
+/** \file
  * Gadget writer library header file*/
 
 /** \namespace GadgetWriter
  *  Classes for writing Gadget files*/
 
-/** 
- * \section intro_sec Writer 
- * GadgetWriter (libwgad.so) is a small library 
- * for easily writing Gadget-1 and 2 formatted files. 
+/**
+ * \section intro_sec Writer
+ * GadgetWriter (libwgad.so) is a small library
+ * for easily writing Gadget-1 and 2 formatted files.
  *
  * \section req_sec Requirements
  * A C++ compiler with map, vector, set and stdint.h
@@ -50,8 +50,8 @@
 
 namespace GadgetWriter{
 
-  /** Public structure for passing around 
-   * the metadata for each block: 
+  /** Public structure for passing around
+   * the metadata for each block:
    * types is a bitfield containing the types that can have this block
    * partlen is bits per particle for this block */
   /* Put this in a map with start_pos*/
@@ -63,9 +63,9 @@ namespace GadgetWriter{
                 std::valarray<bool>  types;
                 short       partlen;
   };
-  
+
   // The following are private structures that we don't want wrapped
-#ifndef SWIG 
+#ifndef SWIG
 
     class DLL_LOCAL GBaseWriteFile {
          public:
@@ -87,22 +87,43 @@ namespace GadgetWriter{
   };
   #endif //SWIG
 
+  /*Base class for snapshot sets, inherited by GWriteSnap,
+   * which implements formats where we have to do the file striping ourselves,
+   * (Gadget and HDF5) and GWriteBigSnap, which implements BigFile*/
+  class DLL_PUBLIC GWriteBaseSnap{
+          public:
+                  /** Base constructor. If you want an HDF5 snapshot, pass a filename ending in .hdf5 */
+                  GWriteBaseSnap(int format, std::valarray<int64_t> npart_in,int num_files=1, bool debug=true) :
+                      npart(npart_in), num_files(num_files), debug(debug)
+                  {}
+                  virtual int64_t WriteBlocks(std::string BlockName, int type, void *data, int64_t np_write, int64_t begin) = 0;
+                  virtual int WriteHeaders(gadget_header head) = 0;
+                  /** Get the number of files */
+                  int GetNumFiles() {
+                     return num_files;
+                  }
+                  //Returns the format. 1== Gadget-1, 2==Gadget-2, 3==HDF5, 4 == BigFile.
+                  int GetFormat(){
+                      return format;
+                  }
+                  ~GWriteBaseSnap() {};
+          protected:
+                  /** Vector to store the maps of each simulation snapshot */
+                  const std::valarray<int64_t> npart;
+                  const int num_files;
+                  int format;
+                  /** Flag to control whether WARN prints anything */
+                  bool debug;
+  };
+
   /** Main class for reading Gadget snapshots. */
-  class DLL_PUBLIC GWriteSnap{
+  class DLL_PUBLIC GWriteSnap : GWriteBaseSnap {
           public:
                   /** Base constructor. If you want an HDF5 snapshot, pass a filename ending in .hdf5 */
                   GWriteSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int num_files=1, int idsize=sizeof(int64_t),bool debug=true, bool format_2 = true, std::vector<block_info> *BlockNames=NULL);
                   int64_t WriteBlocks(std::string BlockName, int type, void *data, int64_t np_write, int64_t begin);
                   //npart, num_files and friends silently ignored
                   int WriteHeaders(gadget_header head);
-                  /** Get the number of files */
-                  int GetNumFiles(){
-                          return files.size();
-                  }
-                  //Returns the format. 1== Gadget-1, 2==Gadget-2, 3==HDF5.
-                  int GetFormat(){
-                      return format;
-                  }
                   ~GWriteSnap()
                   {
                       std::vector<GBaseWriteFile *>::iterator it;
@@ -114,11 +135,6 @@ namespace GadgetWriter{
                   /** Vector to store the maps of each simulation snapshot */
                   std::vector<GBaseWriteFile *> files;
                   std::vector<block_info> BlockNames;
-                  std::valarray<int64_t> npart;
-                  int num_files;
-                  int format;
-                  /** Flag to control whether WARN prints anything */
-                  bool debug;
   };
 
 }

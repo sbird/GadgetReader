@@ -10,8 +10,8 @@
 
 namespace GadgetWriter {
 
-  GWriteBigSnap::GWriteBigSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int NumFiles, bool debug) :
-      npart(npart_in), NumFiles(NumFiles)
+  GWriteBigSnap::GWriteBigSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int num_files, bool debug) :
+      GWriteBaseSnap(4, npart_in, num_files, debug)
   {
           //Create file
           if(0 != big_file_mpi_create(&bf, snap_filename.c_str(), MPI_COMM_WORLD)) {
@@ -56,7 +56,7 @@ namespace GadgetWriter {
       return 0;
   }
 
-  int64_t GWriteBigSnap::WriteBlock(std::string& BlockName, int type, void *data, const char * dtype, int items_per_particle, uint64_t np_write, uint64_t begin)
+  int64_t GWriteBigSnap::WriteBlocks(std::string& BlockName, int type, void *data, uint64_t np_write, uint64_t begin, const char * dtype, int items_per_particle)
   {
       BigBlock block;
       BigArray array;
@@ -77,7 +77,7 @@ namespace GadgetWriter {
      
       /* If we couldn't open it, try to create it. Note that the last argument, size of the array, is not dims[0], 
        * as the array could be split over different processors.*/
-      if(opened < 0 && big_file_mpi_create_block(&bf, &block, FullString.c_str(), dtype, items_per_particle, NumFiles, npart[type], MPI_COMM_WORLD) != 0) {
+      if(opened < 0 && big_file_mpi_create_block(&bf, &block, FullString.c_str(), dtype, items_per_particle, num_files, npart[type], MPI_COMM_WORLD) != 0) {
               throw std::ios_base::failure("Unable to create block: "+FullString+ ":" + big_file_get_error_message());
       }
       if(0 != big_block_seek(&block, &ptr, begin)) {

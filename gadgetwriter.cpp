@@ -3,7 +3,7 @@
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
@@ -17,7 +17,7 @@
 #include <iostream>
 #include <sstream>
 
-/** \file 
+/** \file
  * GadgetReader library method file*/
 namespace GadgetWriter{
 
@@ -27,13 +27,14 @@ namespace GadgetWriter{
 
   uint32_t GBaseWriteFile::GetNPart(int type)
   {
-          if(type <0 || type > N_TYPE)
+          if(type <0 || type > npart.size())
                   return 0;
           return npart[type];
   }
-                  
 
-  GWriteSnap::GWriteSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int num_files_in,int idsize,  bool debug, bool format_2,std::vector<block_info> *BlockNamesIn) : npart(N_TYPE),debug(debug)
+
+  GWriteSnap::GWriteSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int num_files_in,int idsize,  bool debug, bool format_2,std::vector<block_info> *BlockNamesIn) :
+      GWriteBaseSnap(2, npart_in, num_files_in, debug)
   {
           std::valarray<uint32_t> npart_file(N_TYPE);
           std::vector<block_info>::iterator it, jt;
@@ -76,7 +77,7 @@ namespace GadgetWriter{
                 BlockNames.push_back(u);
           }
           //Add the user-specified blocks, which override the defaults.
-          //In case of conflict, later overrides earlier. 
+          //In case of conflict, later overrides earlier.
           if(BlockNamesIn != NULL){
                 for(it=(*BlockNamesIn).begin(); it<(*BlockNamesIn).end(); ++it){
                         if( (*it).types.size() != N_TYPE )
@@ -95,16 +96,10 @@ namespace GadgetWriter{
                         }
                 }
           }
-          num_files = num_files_in;
-          //Set up npart
-          if(npart_in.size() < N_TYPE)
-                  npart[std::slice(0,npart_in.size(),1)] = npart_in;
-          else
-                  npart = npart_in[std::slice(0,N_TYPE,1)];
           if((size_t) 3*(npart.max()/num_files) > (1L<<31)/sizeof(float)){
-                  WARN("Not enough room for %ld particles in %d files\n",npart.max(),num_files);
-                  num_files = 3*sizeof(float)*npart.max()/(1L<<31);
-                  WARN("Increasing to %d files\n",num_files);
+                  ERROR("Not enough room for %ld particles in %d files\n",npart.max(),num_files);
+//                   num_files = 3*sizeof(float)*npart.max()/(1L<<31);
+//                   WARN("Increasing to %d files\n",num_files);
           }
           for(unsigned int i=0; i<npart.size();++i)
                 npart_file[i]=npart[i]/num_files;
