@@ -27,7 +27,7 @@ namespace GadgetWriter{
 
   uint32_t GBaseWriteFile::GetNPart(int type)
   {
-          if(type <0 || type > npart.size())
+          if((unsigned int) type > npart.size())
                   return 0;
           return npart[type];
   }

@@ -1,6 +1,5 @@
 /*Write a BigFile snapshot for Gadget.*/
 
-#ifdef HAVE_BIGFILE
 #include "bigfile-mpi.h"
 #include <mpi.h>
 #include <valarray>
@@ -10,7 +9,7 @@
 
 namespace GadgetWriter {
 
-  GWriteBigSnap::GWriteBigSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int num_files, bool debug) :
+  GWriteBigSnap::GWriteBigSnap(const std::string snap_filename, std::valarray<int64_t> npart_in,int num_files, bool debug) :
       GWriteBaseSnap(4, npart_in, num_files, debug)
   {
           //Create file
@@ -56,7 +55,7 @@ namespace GadgetWriter {
       return 0;
   }
 
-  int64_t GWriteBigSnap::WriteBlocks(std::string& BlockName, int type, void *data, uint64_t np_write, uint64_t begin, const char * dtype, int items_per_particle)
+  int64_t GWriteBigSnap::WriteBlocks(const std::string& BlockName, int type, void *data, uint64_t np_write, uint64_t begin, const char * dtype, int items_per_particle)
   {
       BigBlock block;
       BigArray array;
@@ -91,4 +90,3 @@ namespace GadgetWriter {
   }
 }
 
-#endif
