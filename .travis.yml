@@ -1,4 +1,5 @@
 language: cpp
+os: linux
 compiler: gcc
 addons: 
     apt:
@@ -6,7 +7,5 @@ addons:
             - libboost-test-dev
             - libhdf5-serial-dev
             - openmpi-bin
-os:
-    - linux
 install: true
 script: make && make test
