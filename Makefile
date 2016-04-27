@@ -2,30 +2,12 @@
 OPTS = -DHAVE_HDF5
 #Comment this if you don't need bigfile
 OPTS += -DHAVE_BGFL
-ifeq ($(CC),cc)
-  ICC:=$(shell which icc --tty-only 2>&1)
-  #Can we find icc?
-  ifeq (/icc,$(findstring /icc,${ICC}))
-     CC = icc -vec_report0
-     CXX = icpc
-  else
-     GCC:=$(shell which gcc --tty-only 2>&1)
-     #Can we find gcc?
-     ifeq (/gcc,$(findstring /gcc,${GCC}))
-        CC = gcc
-        CXX = g++
-     endif
-  endif
-endif
 
 #Are we using gcc or icc?
-ifeq (icc,$(findstring icc,${CC}))
-  CFLAGS += -w1 -O2  -g -fPIC
-else
-  CFLAGS += -Wall -O2  -g -fPIC -std=gnu++11
-endif
+CFLAGS += -Wall -O2  -g -fPIC -std=gnu++11
 CXXFLAGS += $(CFLAGS)
 LDFLAGS +=-Wl,-rpath,${CURDIR},--no-add-needed,--as-needed -L${CURDIR} -lrgad
+
 ifeq (HAVE_HDF5,$(findstring HAVE_HDF5,${OPTS}))
 	HDF_LINK = -lhdf5 -lhdf5_hl
 else
@@ -62,7 +44,7 @@ librgad.so.1: $(obj)
 	$(CC) -shared -Wl,-soname,$@ -o $@  $^
 
 bigfile/src/bigfile-mpi.a:
-	cd ./bigfile/src; CFLAGS=-fPIC make
+	cd ./bigfile/src; make
 
 #Writer library.
 libwgad.so: libwgad.so.1
