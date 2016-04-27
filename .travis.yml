@@ -4,7 +4,7 @@ addons:
     apt:
         packages:
             - libboost-test-dev
-            - libhdf5-dev
+            - libhdf5-serial-dev
 os:
     - linux
 install: true
