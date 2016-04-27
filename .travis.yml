@@ -1,0 +1,11 @@
+language: cpp
+compiler: gcc
+addons: 
+    apt:
+        packages:
+            - libboost-test-dev
+            - libhdf5-dev
+os:
+    - linux
+install: true
+script: make && make test
