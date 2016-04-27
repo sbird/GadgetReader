@@ -1,6 +1,7 @@
 language: cpp
 os: linux
-compiler: gcc
+#Don't use gcc as the default gcc on travis is 4.6, too old for C++11.
+compiler: clang
 addons: 
     apt:
         packages:
