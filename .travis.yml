@@ -8,5 +8,7 @@ addons:
             - libboost-test-dev
             - libhdf5-serial-dev
             - libopenmpi-dev
+env:
+    - OMPI_CXX=clang++
 install: true
 script: make && make test
