@@ -1,4 +1,5 @@
 /*Write a BigFile snapshot for Gadget.*/
+#ifdef HAVE_BGFL
 
 #include "bigfile-mpi.h"
 #include <mpi.h>
@@ -90,3 +91,4 @@ namespace GadgetWriter {
   }
 }
 
+#endif

@@ -1,5 +1,7 @@
 #Comment this if you don't need HDF5
 OPTS = -DHAVE_HDF5
+#Comment this if you don't need bigfile
+OPTS += -DHAVE_BGFL
 ifeq ($(CC),cc)
   ICC:=$(shell which icc --tty-only 2>&1)
   #Can we find icc?
@@ -29,8 +31,13 @@ ifeq (HAVE_HDF5,$(findstring HAVE_HDF5,${OPTS}))
 else
 	HDF_LINK =
 endif
-BGFL_LINK = -Lbigfile/src -lbigfile -lbigfile-mpi
-BGFL_INC = -Ibigfile/src
+ifeq (HAVE_BGFL,$(findstring HAVE_BGFL,${OPTS}))
+	BGFL_LINK = -Lbigfile/src -lbigfile -lbigfile-mpi
+	BGFL_INC = -Ibigfile/src
+else
+	BGFL_LINK =
+	BGFL_INC =
+endif
 
 PG = 
 CFLAGS += $(OPTS) $(BGFL_INC)
