@@ -21,7 +21,7 @@ namespace GadgetWriter{
                 if(npart_in[i] == 0)
                     continue;
                 snprintf(g_name[i], 20,"PartType%d",i);
-                hid_t group = H5Gcreate(hdf_file,g_name[i],H5P_DEFAULT, H5P_DEFAULT,H5P_DEFAULT);
+                hid_t group = H5Gcreate2(hdf_file,g_name[i],H5P_DEFAULT, H5P_DEFAULT,H5P_DEFAULT);
                 if (group < 0)
                     throw  std::ios_base::failure(std::string("Unable to create group: ")+std::string(g_name[i]));
           }
@@ -57,7 +57,7 @@ namespace GadgetWriter{
             // Lite interface for making simple attributes
             // H5LTset_attribute_int (file_id, dset_name, attr_name, data, size);
             // herr_t H5LTset_attribute_int( hid_t loc_id, const char *obj_name, const char *attr_name, int *buffer, size_t size)
-            hid_t hdgrp = H5Gcreate(handle, "Header", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            hid_t hdgrp = H5Gcreate2(handle, "Header", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
             herr = H5LTset_attribute_uint(handle, "Header", "NumPart_ThisFile", header.npart, N_TYPE);
             if (herr < 0)
                 return -1*herr;
@@ -94,7 +94,7 @@ namespace GadgetWriter{
   {
             herr_t herr;
             hid_t handle = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-            hid_t group = H5Gopen(handle, g_name[type], H5P_DEFAULT);
+            hid_t group = H5Gopen2(handle, g_name[type], H5P_DEFAULT);
             if(group < 0)
                 return group;
             hsize_t size[2];
@@ -128,9 +128,9 @@ namespace GadgetWriter{
             hid_t full_space_id = H5Screate_simple(rank, size, NULL);
             //If this is the first write, create the dataset
             if (begin==0) {
-                H5Dcreate(group,BlockName.c_str(),dtype, full_space_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                H5Dcreate2(group,BlockName.c_str(),dtype, full_space_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
             }
-            hid_t dset = H5Dopen(group,BlockName.c_str(),H5P_DEFAULT);
+            hid_t dset = H5Dopen2(group,BlockName.c_str(),H5P_DEFAULT);
             if (dset < 0)
                 return dset;
             size[0] = np_write;
