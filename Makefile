@@ -53,6 +53,9 @@ libwgad.so: libwgad.so.1
 libwgad.so.1: gadgetwriter.o gadgetwritehdf.o gadgetwriteoldgadget.o gadgetwritebigfile.o
 	mpic++ -shared -Wl,-soname,$@ $(HDF_LINK) -o $@ $^ $(BGFL_LINK)
 
+gadgetwritebigfile.o: gadgetwritebigfile.cpp gadgetwritebigfile.hpp
+	mpic++ $(CFLAGS) -c $^
+
 %.o: %.cpp %.hpp gadgetheader.h gadgetwritefile.hpp
 
 gadgetreader.o: gadgetreader.cpp $(head)
