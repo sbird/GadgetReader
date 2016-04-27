@@ -6,6 +6,6 @@ addons:
         packages:
             - libboost-test-dev
             - libhdf5-serial-dev
-            - openmpi-bin
+            - libopenmpi-dev
 install: true
 script: make && make test
