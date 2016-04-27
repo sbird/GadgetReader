@@ -5,6 +5,7 @@ addons:
         packages:
             - libboost-test-dev
             - libhdf5-serial-dev
+            - openmpi
 os:
     - linux
 install: true
