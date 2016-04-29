@@ -35,7 +35,7 @@ PERLINC=-I/usr/lib/perl5/core_perl/CORE
 
 .PHONY: all clean test dist pybind bind
 
-all: bigfile/src/bigfile-mpi.a librgad.so libwgad.so PGIIhead PosDump Convert2HDF5
+all: librgad.so libwgad.so PGIIhead PosDump Convert2HDF5
 
 librgad.so: librgad.so.1
 	ln -sf $< $@
@@ -43,15 +43,15 @@ librgad.so: librgad.so.1
 librgad.so.1: $(obj)
 	$(CC) -shared -Wl,-soname,$@ -o $@  $^
 
-bigfile/src/bigfile-mpi.a:
-	cd $(CURDIR)/bigfile/src; make
+bigfile-mpi.a:
+	cd $(CURDIR)/bigfile/src; VPATH=$(CURDIR)/bigfile/src make
 
 #Writer library.
 libwgad.so: libwgad.so.1
 	ln -sf $< $@
 
-libwgad.so.1: gadgetwriter.o gadgetwritehdf.o gadgetwriteoldgadget.o gadgetwritebigfile.o
-	mpic++ -shared -Wl,-soname,$@ $(HDF_LINK) -o $@ $^ $(BGFL_LINK)
+libwgad.so.1: gadgetwriter.o gadgetwritehdf.o gadgetwriteoldgadget.o gadgetwritebigfile.o bigfile-mpi.a
+	mpic++ -shared -Wl,-soname,$@ $(HDF_LINK) -o $@ $(filter-out bigfile-mpi.a,$^) $(BGFL_LINK)
 
 gadgetwritebigfile.o: gadgetwritebigfile.cpp gadgetwritebigfile.hpp
 	mpic++ $(CFLAGS) -c $^
