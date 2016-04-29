@@ -7,6 +7,8 @@ OPTS += -DHAVE_BGFL
 CFLAGS += -Wall -O2  -g -fPIC -std=gnu++11
 CXXFLAGS += $(CFLAGS)
 LDFLAGS +=-Wl,-rpath,${CURDIR},--no-add-needed,--as-needed -L${CURDIR} -lrgad
+#compile flags for the libraries
+LIBFLAGS +=-shared -Wl,-soname,$@,--no-add-needed,--as-needed
 
 ifeq (HAVE_HDF5,$(findstring HAVE_HDF5,${OPTS}))
 	HDF_LINK = -lhdf5 -lhdf5_hl
@@ -41,7 +43,7 @@ librgad.so: librgad.so.1
 	ln -sf $< $@
 
 librgad.so.1: $(obj)
-	$(CC) -shared -Wl,-soname,$@ -o $@  $^
+	$(CC) $^ $(LIBFLAGS) -o $@
 
 bigfile-mpi.a:
 	cd $(CURDIR)/bigfile/src; VPATH=$(CURDIR)/bigfile/src make
@@ -51,7 +53,7 @@ libwgad.so: libwgad.so.1
 	ln -sf $< $@
 
 libwgad.so.1: gadgetwriter.o gadgetwritehdf.o gadgetwriteoldgadget.o gadgetwritebigfile.o bigfile-mpi.a
-	mpic++ -shared -Wl,-soname,$@ $(HDF_LINK) -o $@ $(filter-out bigfile-mpi.a,$^) $(BGFL_LINK)
+	mpic++ $(filter-out bigfile-mpi.a,$^) $(LIBFLAGS) $(HDF_LINK) -o $@ $(BGFL_LINK)
 
 gadgetwritebigfile.o: gadgetwritebigfile.cpp gadgetwritebigfile.hpp
 	mpic++ $(CFLAGS) -c $^
