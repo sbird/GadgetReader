@@ -44,7 +44,7 @@ librgad.so.1: $(obj)
 	$(CC) -shared -Wl,-soname,$@ -o $@  $^
 
 bigfile/src/bigfile-mpi.a:
-	cd ./bigfile/src; make
+	cd $(CURDIR)/bigfile/src; make
 
 #Writer library.
 libwgad.so: libwgad.so.1
