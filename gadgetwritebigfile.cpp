@@ -14,6 +14,7 @@ namespace GadgetWriter {
       GWriteBaseSnap(4, npart_in, num_files, debug)
   {
           //Create file
+          bf = {0};
           if(0 != big_file_mpi_create(&bf, snap_filename.c_str(), MPI_COMM_WORLD)) {
               throw  std::ios_base::failure(std::string("Unable to create file: ")+snap_filename+ ":" + big_file_get_error_message());
           }
@@ -27,7 +28,7 @@ namespace GadgetWriter {
 
   int GWriteBigSnap::WriteHeaders(gadget_header header)
   {
-      BigBlock bheader;
+      BigBlock bheader = {0};
       int ret = big_file_mpi_create_block(&bf, &bheader, "header", NULL, 0, 0, 0, MPI_COMM_WORLD);
       if (ret != 0)
           return ret;
@@ -58,9 +59,9 @@ namespace GadgetWriter {
 
   int64_t GWriteBigSnap::WriteBlocks(const std::string& BlockName, int type, void *data, uint64_t np_write, uint64_t begin, const char * dtype, int items_per_particle)
   {
-      BigBlock block;
-      BigArray array;
-      BigBlockPtr ptr;
+      BigBlock block = {0};
+      BigArray array = {0};
+      BigBlockPtr ptr = {0};
       size_t dims[2];
       ptrdiff_t strides[2];
       /*This should be the total size of the array*/
