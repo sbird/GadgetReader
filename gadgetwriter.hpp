@@ -94,7 +94,7 @@ namespace GadgetWriter{
           public:
                   /** Base constructor. If you want an HDF5 snapshot, pass a filename ending in .hdf5 */
                   GWriteBaseSnap(int format, std::valarray<int64_t> npart_in,int num_files=1, bool debug=true) :
-                      npart(npart_in), num_files(num_files), debug(debug)
+                      npart(npart_in), num_files(num_files), format(format), debug(debug)
                   {}
                   virtual int WriteHeaders(gadget_header head) = 0;
                   /** Get the number of files */
