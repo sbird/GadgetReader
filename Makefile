@@ -10,8 +10,16 @@ LDFLAGS +=-Wl,-rpath,${CURDIR},--no-add-needed,--as-needed -L${CURDIR} -lrgad
 #compile flags for the libraries
 LIBFLAGS +=-shared -Wl,-soname,$@,--no-add-needed,--as-needed
 
+HDF_INC =
 ifeq (HAVE_HDF5,$(findstring HAVE_HDF5,${OPTS}))
-	HDF_LINK = -lhdf5 -lhdf5_hl
+	#Check for a pkgconfig; if one exists we are probably debian.
+	PKG = $(shell pkg-config --exists hdf5-serial )
+	ifeq (PKG,0)
+		HDF_LINK = $(shell pkg-config --libs hdf5-serial)
+		HDF_INC = $(shell pkg-config --cflags hdf5-serial)
+	else
+		HDF_LINK = -lhdf5 -lhdf5_hl
+	endif
 else
 	HDF_LINK =
 endif
@@ -24,7 +32,7 @@ else
 endif
 
 PG = 
-CFLAGS += $(OPTS) $(BGFL_INC)
+CFLAGS += $(OPTS) $(BGFL_INC) $(HDF_INC)
 obj=gadgetreader.o
 head=read_utils.h gadgetreader.hpp gadgetheader.h
 #Include directories for python and perl.
