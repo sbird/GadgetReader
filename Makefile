@@ -13,8 +13,7 @@ LIBFLAGS +=-shared -Wl,-soname,$@,--no-add-needed,--as-needed
 HDF_INC =
 ifeq (HAVE_HDF5,$(findstring HAVE_HDF5,${OPTS}))
 	#Check for a pkgconfig; if one exists we are probably debian.
-	PKG = $(shell pkg-config --exists hdf5-serial )
-	ifeq (PKG,0)
+	ifeq ($(shell pkg-config --exists hdf5-serial && echo 1),1)
 		HDF_LINK = $(shell pkg-config --libs hdf5-serial)
 		HDF_INC = $(shell pkg-config --cflags hdf5-serial)
 	else
