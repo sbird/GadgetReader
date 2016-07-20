@@ -14,8 +14,8 @@ HDF_INC =
 ifeq (HAVE_HDF5,$(findstring HAVE_HDF5,${OPTS}))
 	#Check for a pkgconfig; if one exists we are probably debian.
 	ifeq ($(shell pkg-config --exists hdf5-serial && echo 1),1)
-		HDF_LINK = $(shell pkg-config --libs hdf5-serial)
-		HDF_INC = $(shell pkg-config --cflags hdf5-serial)
+		HDF_LINK = $(shell pkg-config --libs hdf5) -lhdf5_hl
+		HDF_INC = $(shell pkg-config --cflags hdf5)
 	else
 		HDF_LINK = -lhdf5 -lhdf5_hl
 	endif
