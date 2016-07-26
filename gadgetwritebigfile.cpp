@@ -1,12 +1,43 @@
 /*Write a BigFile snapshot for Gadget.*/
 #ifdef HAVE_BGFL
-
+#ifdef BIGFILE_MPI
 #include "bigfile-mpi.h"
 #include <mpi.h>
+#else
+#include "bigfile.h"
+#endif
+#include <iostream>
 #include <valarray>
 #include <string>
 #include <stdint.h>
 #include "gadgetwritebigfile.hpp"
+
+#ifdef BIGFILE_MPI
+#define BIG_FILE_CREATE(bf, filename) big_file_mpi_create(bf, filename, MPI_COMM_WORLD)
+#define BIG_FILE_CLOSE(bf) big_file_mpi_close(bf, MPI_COMM_WORLD)
+#define BIG_FILE_CREATE_BLOCK(bf, block, basename, dtype, nmemb, Nfile, size) \
+    big_file_mpi_create_block(bf, block, basename, dtype, nmemb, Nfile, size, MPI_COMM_WORLD)
+#define BIG_FILE_OPEN_BLOCK(bf, block, basename) big_file_mpi_open_block(bf, block, basename, MPI_COMM_WORLD)
+#define BIG_BLOCK_CLOSE(bheader) big_block_mpi_close(bheader, MPI_COMM_WORLD)
+#else
+int big_file_create_block_wrapper(BigFile * bf, BigBlock * block, const char * blockname, const char * dtype, int nmemb, int Nfile, size_t size) {
+    size_t fsize[Nfile];
+    int i;
+    for(i = 0; i < Nfile; i ++) {
+        fsize[i] = size * (i + 1) / Nfile 
+                 - size * (i) / Nfile;
+    }
+    return big_file_create_block(bf, block, blockname, dtype, nmemb, Nfile, fsize);
+}
+
+#define BIG_FILE_CREATE(bf, filename) big_file_create(bf, filename)
+#define BIG_FILE_CLOSE(bf) big_file_close(bf)
+#define BIG_FILE_CREATE_BLOCK(bf, block, basename, dtype, nmemb, Nfile, size) \
+    big_file_create_block_wrapper(bf, block, basename, dtype, nmemb, Nfile, size)
+#define BIG_FILE_OPEN_BLOCK(bf, block, basename) big_file_open_block(bf, block, basename)
+#define BIG_BLOCK_CLOSE(bheader) big_block_close(bheader)
+
+#endif
 
 namespace GadgetWriter {
 
@@ -15,21 +46,22 @@ namespace GadgetWriter {
   {
           //Create file
           bf = {0};
-          if(0 != big_file_mpi_create(&bf, snap_filename.c_str(), MPI_COMM_WORLD)) {
+          if(0 != BIG_FILE_CREATE(&bf, snap_filename.c_str())) {
               throw  std::ios_base::failure(std::string("Unable to create file: ")+snap_filename+ ":" + big_file_get_error_message());
           }
+
           return;
   }
 
   GWriteBigSnap::~GWriteBigSnap()
   {
-      big_file_mpi_close(&bf, MPI_COMM_WORLD);
+      BIG_FILE_CLOSE(&bf);
   }
 
   int GWriteBigSnap::WriteHeaders(gadget_header header)
   {
       BigBlock bheader = {0};
-      int ret = big_file_mpi_create_block(&bf, &bheader, "header", NULL, 0, 0, 0, MPI_COMM_WORLD);
+      int ret = BIG_FILE_CREATE_BLOCK(&bf, &bheader, "header", NULL, 0, 0, 0);
       if (ret != 0)
           return ret;
       int64_t npart_arr[N_TYPE];
@@ -51,7 +83,7 @@ namespace GadgetWriter {
       if (ret != 0)
           return ret;
 
-      ret = big_block_mpi_close(&bheader, MPI_COMM_WORLD);
+      ret = BIG_BLOCK_CLOSE(&bheader);
       if(ret != 0)
           return ret;
       return 0;
@@ -74,11 +106,11 @@ namespace GadgetWriter {
     
       std::string FullString(std::to_string(type)+"/"+BlockName);
       /*Try to open the block*/
-      int opened = big_file_mpi_open_block(&bf, &block, FullString.c_str(), MPI_COMM_WORLD);
+      int opened = BIG_FILE_OPEN_BLOCK(&bf, &block, FullString.c_str());
      
       /* If we couldn't open it, try to create it. Note that the last argument, size of the array, is not dims[0], 
        * as the array could be split over different processors.*/
-      if(opened < 0 && big_file_mpi_create_block(&bf, &block, FullString.c_str(), dtype, items_per_particle, num_files, npart[type], MPI_COMM_WORLD) != 0) {
+      if(opened < 0 && BIG_FILE_CREATE_BLOCK(&bf, &block, FullString.c_str(), dtype, items_per_particle, num_files, npart[type]) != 0) {
               throw std::ios_base::failure("Unable to create block: "+FullString+ ":" + big_file_get_error_message());
       }
       if(0 != big_block_seek(&block, &ptr, begin)) {
@@ -87,7 +119,7 @@ namespace GadgetWriter {
       if(0 != big_block_write(&block, &ptr, &array)) {
           throw std::ios_base::failure("Failed writing " + FullString + ":" + big_file_get_error_message());
       }
-      big_block_mpi_close(&block, MPI_COMM_WORLD);
+      BIG_BLOCK_CLOSE(&block);
       return np_write;
   }
 }

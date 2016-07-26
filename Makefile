@@ -2,6 +2,8 @@
 OPTS = -DHAVE_HDF5
 #Comment this if you don't need bigfile
 OPTS += -DHAVE_BGFL
+#Use this if you want to write with the bigfile MPI routines.
+#OPTS += -DBIGFILE_MPI
 
 #Are we using gcc or icc?
 CFLAGS += -Wall -O2  -g -fPIC -std=gnu++11
@@ -9,6 +11,8 @@ CXXFLAGS += $(CFLAGS)
 LDFLAGS +=-Wl,-rpath,${CURDIR},--no-add-needed,--as-needed -L${CURDIR} -lrgad
 #compile flags for the libraries
 LIBFLAGS +=-shared -Wl,-soname,$@,--no-add-needed,--as-needed
+#Linker to use
+LINK = $(CC)
 
 HDF_INC =
 ifeq (HAVE_HDF5,$(findstring HAVE_HDF5,${OPTS}))
@@ -23,7 +27,11 @@ else
 	HDF_LINK =
 endif
 ifeq (HAVE_BGFL,$(findstring HAVE_BGFL,${OPTS}))
-	BGFL_LINK = -Lbigfile/src -lbigfile -lbigfile-mpi
+	BGFL_LINK = -Lbigfile/src -lbigfile
+ifeq (BIGFILE_MPI,$(findstring BIGFILE_MPI,${OPTS}))
+   	BGFL_LINK += -lbigfile-mpi
+	LINK=mpic++
+endif
 	BGFL_INC = -Ibigfile/src
 else
 	BGFL_LINK =
@@ -52,18 +60,18 @@ librgad.so: librgad.so.1
 librgad.so.1: $(obj)
 	$(CC) $^ $(LIBFLAGS) -o $@
 
-bigfile-mpi.a:
-	cd $(CURDIR)/bigfile/src; VPATH=$(CURDIR)/bigfile/src make
-
 #Writer library.
 libwgad.so: libwgad.so.1
 	ln -sf $< $@
 
+bigfile-mpi.a:
+	cd $(CURDIR)/bigfile/src; VPATH=$(CURDIR)/bigfile/src make
+
 libwgad.so.1: gadgetwriter.o gadgetwritehdf.o gadgetwriteoldgadget.o gadgetwritebigfile.o bigfile-mpi.a
-	mpic++ $(filter-out bigfile-mpi.a,$^) $(LIBFLAGS) $(HDF_LINK) -o $@ $(BGFL_LINK)
+	$(LINK) $(filter-out bigfile-mpi.a,$^) $(LIBFLAGS) $(HDF_LINK) -o $@ $(BGFL_LINK)
 
 gadgetwritebigfile.o: gadgetwritebigfile.cpp gadgetwritebigfile.hpp
-	mpic++ $(CFLAGS) -c $^
+	$(LINK) $(CFLAGS) -c $^
 
 %.o: %.cpp %.hpp gadgetheader.h gadgetwritefile.hpp
 
