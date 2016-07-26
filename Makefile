@@ -31,6 +31,9 @@ ifeq (HAVE_BGFL,$(findstring HAVE_BGFL,${OPTS}))
 ifeq (BIGFILE_MPI,$(findstring BIGFILE_MPI,${OPTS}))
    	BGFL_LINK += -lbigfile-mpi
 	LINK=mpic++
+	LIBBIGFILE = libbigfile-mpi.a
+else
+	LIBBIGFILE = libbigfile.a
 endif
 	BGFL_INC = -Ibigfile/src
 else
@@ -64,11 +67,11 @@ librgad.so.1: $(obj)
 libwgad.so: libwgad.so.1
 	ln -sf $< $@
 
-bigfile-mpi.a:
-	cd $(CURDIR)/bigfile/src; VPATH=$(CURDIR)/bigfile/src make
+$(LIBBIGFILE):
+	cd $(CURDIR)/bigfile/src; VPATH=$(CURDIR)/bigfile/src make $@
 
-libwgad.so.1: gadgetwriter.o gadgetwritehdf.o gadgetwriteoldgadget.o gadgetwritebigfile.o bigfile-mpi.a
-	$(LINK) $(filter-out bigfile-mpi.a,$^) $(LIBFLAGS) $(HDF_LINK) -o $@ $(BGFL_LINK)
+libwgad.so.1: gadgetwriter.o gadgetwritehdf.o gadgetwriteoldgadget.o gadgetwritebigfile.o $(LIBBIGFILE)
+	$(LINK) $(filter-out $(LIBBIGFILE),$^) $(LIBFLAGS) $(HDF_LINK) -o $@ $(BGFL_LINK)
 
 gadgetwritebigfile.o: gadgetwritebigfile.cpp gadgetwritebigfile.hpp
 	$(LINK) $(CFLAGS) -c $^
