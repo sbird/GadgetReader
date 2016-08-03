@@ -61,7 +61,7 @@ namespace GadgetWriter {
   int GWriteBigSnap::WriteHeaders(gadget_header header)
   {
       BigBlock bheader = {0};
-      int ret = BIG_FILE_CREATE_BLOCK(&bf, &bheader, "header", NULL, 0, 0, 0);
+      int ret = BIG_FILE_CREATE_BLOCK(&bf, &bheader, "Header", NULL, 0, 0, 0);
       if (ret != 0)
           return ret;
       int64_t npart_arr[N_TYPE];
