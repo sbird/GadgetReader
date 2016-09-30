@@ -1,3 +1,4 @@
+#ifdef HAVE_BGFL
 #ifndef GADGETWRITE_BIGFILE_H
 #define GADGETWRITE_BIGFILE_H
 
@@ -24,4 +25,5 @@ namespace GadgetWriter {
 
 }
 
-#endif
+#endif //GADGEWRITE_BIGFILE_H
+#endif //HAVE_BGFL
