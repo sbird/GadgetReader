@@ -20,7 +20,7 @@ else
 	LIBFLAGS += -dynamiclib -Wl,-install_name,$@
 endif
 #Linker to use
-LINK = $(CC)
+LINK = $(CXX)
 
 HDF_INC =
 ifeq (HAVE_HDF5,$(findstring HAVE_HDF5,${OPTS}))
@@ -69,7 +69,7 @@ librgad.so: librgad.so.1
 	ln -sf $< $@
 
 librgad.so.1: $(obj)
-	$(CC) $^ $(LIBFLAGS) -o $@
+	$(CXX) $^ $(LIBFLAGS) -o $@
 
 #Writer library.
 libwgad.so: libwgad.so.1
