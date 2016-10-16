@@ -8,9 +8,17 @@ OPTS += -DHAVE_BGFL
 #Are we using gcc or icc?
 CFLAGS += -Wall -O2  -g -fPIC -std=gnu++11
 CXXFLAGS += $(CFLAGS)
-LDFLAGS +=-Wl,-rpath,${CURDIR},--no-add-needed,--as-needed -L${CURDIR} -lrgad
-#compile flags for the libraries
-LIBFLAGS +=-shared -Wl,-soname,$@,--no-add-needed,--as-needed
+LDFLAGS += -L${CURDIR} -lrgad
+#Mac's ld doesn't use -soname or -shared, so check for it.
+#We are looking for the response: ld unknown option: -soname
+LDCHECK:=$(shell ld -soname 2>&1)
+ifneq (unknown,$(findstring unknown,${LDCHECK}))
+	LDFLAGS +=-Wl,-rpath,${CURDIR},--no-add-needed,--as-needed
+	#compile flags for the libraries
+	LIBFLAGS +=-shared -Wl,-soname,$@,--no-add-needed,--as-needed
+else
+	LIBFLAGS += -dynamiclib -Wl,-install_name,$@
+endif
 #Linker to use
 LINK = $(CC)
 
