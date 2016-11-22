@@ -76,7 +76,7 @@ libwgad.so: libwgad.so.1
 	ln -sf $< $@
 
 $(LIBBIGFILE):
-	cd $(CURDIR)/bigfile/src; VPATH=$(CURDIR)/bigfile/src make $@
+	cd $(CURDIR)/bigfile/src; VPATH=$(CURDIR)/bigfile/src; MPICC=$(CC) make $@
 
 libwgad.so.1: gadgetwriter.o gadgetwritehdf.o gadgetwriteoldgadget.o gadgetwritebigfile.o $(LIBBIGFILE)
 	$(LINK) $(filter-out $(LIBBIGFILE),$^) $(LIBFLAGS) $(HDF_LINK) -o $@ $(BGFL_LINK)
