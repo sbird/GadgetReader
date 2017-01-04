@@ -53,15 +53,7 @@ PG =
 CFLAGS += $(OPTS) $(BGFL_INC) $(HDF_INC)
 obj=gadgetreader.o
 head=read_utils.h gadgetreader.hpp gadgetheader.h
-#Include directories for python and perl.
-PYINC:=$(shell python-config --includes)
-#Check python-config isn't a python 3 version: 
-ifeq (python3,$(findstring python3,${PYINC}))
-	PYINC:=$(shell python2-config --includes)
-endif
-PERLINC=-I/usr/lib/perl5/core_perl/CORE
-
-.PHONY: all clean test dist pybind bind
+.PHONY: all clean test dist
 
 all: librgad.so libwgad.so PGIIhead PosDump Convert2HDF5
 
@@ -76,7 +68,7 @@ libwgad.so: libwgad.so.1
 	ln -sf $< $@
 
 $(LIBBIGFILE):
-	cd $(CURDIR)/bigfile/src; VPATH=$(CURDIR)/bigfile/src make $@
+	cd $(CURDIR)/bigfile/src; VPATH=$(CURDIR)/bigfile/src; MPICC=$(CC) make $@
 
 libwgad.so.1: gadgetwriter.o gadgetwritehdf.o gadgetwriteoldgadget.o gadgetwritebigfile.o $(LIBBIGFILE)
 	$(LINK) $(filter-out $(LIBBIGFILE),$^) $(LIBFLAGS) $(HDF_LINK) -o $@ $(BGFL_LINK)
@@ -108,30 +100,6 @@ cleanall: clean
 
 doc: Doxyfile gadgetreader.hpp gadgetreader.cpp
 	doxygen $<
-
-bind: pybind
-
-python:
-	mkdir python
-perl:
-	mkdir perl
-
-python/rgad_python.cxx: gadgetreader.i python
-	swig -Wall -python -c++ -o $@ $<
-
-python/_gadgetreader.so: python/rgad_python.cxx librgad.so python
-	$(CXX) ${CXXFLAGS} ${PYINC} -shared -Wl,-soname,_gadgetreader.so ${LDFLAGS} $< -o $@
-
-pybind: python/_gadgetreader.so
-
-#WARNING: Not as functional as python bindings
-perl/rgad_perl.cxx: gadgetreader.i perl
-	swig -Wall -perl -c++ -o $@ $<
-
-perl/_gadgetreader.so: perl/rgad_perl.cxx librgad.so perl
-	$(CXX) ${CXXFLAGS} ${PERLINC} -shared -Wl,-soname,_gadgetreader.so ${LDFLAGS} $< -o $@
-
-perlbind: perl/_gadgetreader.so
 
 dist: Makefile README $(head) Doxyfile PGIIhead.cpp PGIIhead_out.txt btest.cpp gadgetreader.cpp gadgetreader.i test_g2_snap.0 test_g2_snap.1 PosDump.cpp gadgetwriter.cpp gadgetwriter.hpp
 	tar -czf GadgetReader.tar.gz $^

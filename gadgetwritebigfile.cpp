@@ -60,7 +60,7 @@ namespace GadgetWriter {
 
   int GWriteBigSnap::WriteHeaders(gadget_header header)
   {
-      BigBlock bheader = {0};
+      BigBlock bheader = {};
       int ret = BIG_FILE_CREATE_BLOCK(&bf, &bheader, "Header", NULL, 0, 0, 0);
       if (ret != 0)
           return ret;
@@ -91,7 +91,7 @@ namespace GadgetWriter {
 
   int64_t GWriteBigSnap::WriteBlocks(const std::string& BlockName, int type, void *data, uint64_t np_write, uint64_t begin, const char * dtype, int items_per_particle)
   {
-      BigBlock block = {0};
+      BigBlock block = {};
       BigArray array = {0};
       BigBlockPtr ptr = {0};
       size_t dims[2];
