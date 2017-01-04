@@ -10,4 +10,22 @@ addons:
 env:
     - OMPI_CXX=clang++
 install: true
-script: make && make test
+script: make && make testenv:
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "BLZFi1fD7lRuewyjnwf0ghSqpOschZ8kxkdbEFCZQ895/rAMhJjmwuYrfBdrj+RdRcJQcgTqYYjt4m93gim3cd8yoI0uCFCZGR6RJJKMoer8EziyPFXo/CCZ9QnTEbJE/gSx/ffco+gifpIPqE2w1Ex+p6HtDRou3irBhJhI2tHVvxWigVtF25phGrNoAli9fIne6/9as798UALx8SIm6FaeDjlcGBjRgTAhIvX9T1TyM9BzU9wM6qk5DPRY1Yyc9CGkb6mFJk7K5Wh5/NgaRn5bQkEhGHGUh9OVoJuPtc2GvvdmAhi86WoQDwQXiByzrrqFHXdMKydK1Mo+rhFWk/wY24k3kcrmf+QRWLns2IoKt75d3eN1iVuDD7UROTNS3CL1xM8nIVldSKLGU4JyZODO1hzzYPE8/Jp2V1ELMIsECoOVxNEjJw9ERbX2m30c1cH512a7HUmV1fro5YPJOsRMcwm35Ugo1dbb+tdCGp1jVDnEgkMux1U2ijBnO2H4NaAs0bFPT3Ey+83onnQFl/qxk01O9l2gKZYbMEkvcM2YYRdo/ieTVwgDYfqTuauJfatmOAYydCJqP5TdjeRfvjcOaekp6w2cGAQfvgAtZXLjQKNvoUpo6cu0ytH7pAZQaUge1UxtUPk+M2GlNzmUO6HQ1LIur5oV1R3PEFGR7KE="
+
+before_install:
+      - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+
+addons:
+  coverity_scan:
+    project:
+      name: "sbird/GadgetReader"
+      description: "Read Gadget files"
+    notification_email: sbird4@jhu.edu
+    build_command_prepend: 
+    build_command:   make -j4
+    branch_pattern: coverity_scan
