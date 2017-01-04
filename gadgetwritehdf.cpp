@@ -59,13 +59,17 @@ namespace GadgetWriter{
             // herr_t H5LTset_attribute_int( hid_t loc_id, const char *obj_name, const char *attr_name, int *buffer, size_t size)
             hid_t hdgrp = H5Gcreate2(handle, "Header", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
             herr = H5LTset_attribute_uint(handle, "Header", "NumPart_ThisFile", header.npart, N_TYPE);
-            if (herr < 0)
+            if (herr < 0) {
+                WARN("Could not write to header");
                 return -1*herr;
+            }
             herr = H5LTset_attribute_uint(handle, "Header", "NumPart_Total", header.npartTotal, N_TYPE);
             herr = H5LTset_attribute_uint(handle, "Header", "NumPart_Total_HighWord", header.NallHW, N_TYPE);
             herr = H5LTset_attribute_double(handle, "Header", "MassTable", header.mass, N_TYPE);
-            if (herr < 0)
+            if (herr < 0) {
+                WARN("Could not write particle numbers");
                 return -1*herr;
+            }
             herr = H5LTset_attribute_double(handle, "Header", "Time", &header.time, 1);
             herr = H5LTset_attribute_double(handle, "Header", "Redshift", &header.redshift, 1);
             herr = H5LTset_attribute_double(handle, "Header", "BoxSize", &header.BoxSize, 1);
@@ -83,8 +87,10 @@ namespace GadgetWriter{
             herr = H5LTset_attribute_double(handle, "Header", "UnitLength_in_cm", &header.UnitLength_in_cm, 1);
             herr = H5LTset_attribute_double(handle, "Header", "UnitMass_in_g", &header.UnitMass_in_g, 1);
             herr = H5LTset_attribute_double(handle, "Header", "UnitVelocity_in_cm_per_s", &header.UnitVelocity_in_cm_per_s, 1);
-            if (herr < 0)
+            if (herr < 0) {
+                WARN("Could not write final header flags");
                 return -1*herr;
+            }
             H5Gclose(hdgrp);
             H5Fclose(handle);
             return 0;
