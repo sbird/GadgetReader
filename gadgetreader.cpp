@@ -281,7 +281,7 @@ namespace GadgetReader{
   * name - place to store block name
   * fd - file descriptor
   * file - filename of open file */
- uint32_t GSnapFile::read_block_head(char* name, FILE *fd, const char * file)
+ uint32_t GSnapFile::read_block_head(char name[], FILE *fd, const char * file)
  {
         uint32_t head[5];
         //Read the "block header" record, only present on Gadget-II files. 
@@ -304,7 +304,7 @@ namespace GadgetReader{
         }
         strncpy(name,(char *)&head[1],4);
         //Null-terminate the string
-        *(name+5)='\0';
+        name[4]='\0';
         //Don't include the two "record_size" indicators in the total length count
         return head[2]-2*sizeof(uint32_t);
   }
