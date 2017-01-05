@@ -361,7 +361,7 @@ namespace GadgetReader{
   /*Check the consistency of file headers. This is just a short sanity check 
    * to make sure the user hasn't put two entirely different simulations with the same 
    * snapshot name in the same directory or something*/
-  bool GSnap::check_headers(gadget_header head1, gadget_header head2)
+  bool GSnap::check_headers(const gadget_header& head1, const gadget_header& head2)
   {
     /*Check single quantities*/
     /*Even the floats ought to be really identical if we have read them from disc*/
