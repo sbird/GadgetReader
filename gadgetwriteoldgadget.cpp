@@ -14,7 +14,7 @@ namespace GadgetWriter{
           return;
   }
   
-  int GWriteFile::WriteHeader(gadget_header head)
+  int GWriteFile::WriteHeader(gadget_header& head)
   {
         for(int i=0; i<N_TYPE; i++){
                 head.npart[i]=npart[i];
