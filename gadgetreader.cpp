@@ -242,24 +242,26 @@ namespace GadgetReader{
                    * If this is true, we can't get record size from the length and we just have to guess
                    * At least the record sizes at either end should be consistently wrong. */
                   /* Better hope this only happens for blocks where all particles are present.*/
-                  uint64_t extra_len=total_file_part*c_info.partlen;
-                  if(extra_len >= ((uint64_t)1)<<32){
+                  uint64_t seek_len=total_file_part*c_info.partlen;
+                  int fseekret = 0;
+                  if(seek_len >= ((uint64_t)1)<<32){
                           WARN("Block %s was longer than could fit in %lu bytes.\n",c_name,sizeof(uint32_t));
-                          WARN("Guessed size of %lu from header\n",extra_len);
-                          /*Seek the rest of the block*/
-                          fseek(fd,extra_len,SEEK_CUR);
+                          WARN("Guessed size of %lu from header\n",seek_len);
                   }
                   else
-                          fseek(fd,c_info.length,SEEK_CUR);
-                  if((fread(&record_size,sizeof(uint32_t),1,fd)!=1) ||
+                      seek_len = c_info.length;
+                  if(fseek(fd,seek_len,SEEK_CUR) != 0) {
+                      WARN("Could not seek to %lu from current file location\n",seek_len);
+                      break;
+                  }
+                  if(fseekret || (fread(&record_size,sizeof(uint32_t),1,fd)!=1) ||
                       ( !swap_endian && record_size != c_info.length) ||
                       ( swap_endian && endian_swap(&record_size) != c_info.length)){
                           WARN("Corrupt record in %s footer for block %s (%lu vs %u), skipping rest of file\n",file, c_name, c_info.length, record_size);
                           break;
                   }
-                  /*Store new block length*/
-                  if(extra_len >= ((uint64_t)1)<<32)
-                        c_info.length=extra_len;
+                  /*Store block length, in case it was too long.*/
+                  c_info.length=seek_len;
                   // Set up the particle types in the block. This also is a heuristic,
                   // which assumes that blocks are either fully present or not for a given particle type
                   if(SetBlockTypes(c_info)){
