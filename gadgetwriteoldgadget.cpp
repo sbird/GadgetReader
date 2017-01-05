@@ -68,7 +68,10 @@ namespace GadgetWriter{
                 int64_t init_fpos = (*it).second+begin*partlen;
                 if(type==MinType)
                         init_fpos+=header_size;
-                fseek(fd,init_fpos, SEEK_SET);
+                if(fseek(fd,init_fpos, SEEK_SET) < 0) {
+                    WARN("Could not seek to correct location\n");
+                    return 0;
+                }
           }
           int64_t ret=fwrite(data, partlen, np_write, fd);
           if(ret != np_write){
