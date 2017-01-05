@@ -50,29 +50,35 @@ int main(int argc, char* argv[]){
      std::valarray<int64_t> npart(N_TYPE);
      for (int i=0; i<N_TYPE; i++)
          npart[i] = snap.GetNpart(i);
-     GWriteSnap hdf5snap(outfile, npart, snap.GetNumFiles());
-     hdf5snap.WriteHeaders(head);
-     /*Now write some data types*/
-     /*Initialise the map*/
-     init_map();
-     set<string> blocks=snap.GetBlocks();
-     set<string>::iterator it;
-     for(int i = 0; i < N_TYPE; i++){
-         if(snap.GetNpart(i) == 0)
-             continue;
-         for(it=blocks.begin() ; it != blocks.end(); it++){
-             /*Default to float, except when we have IDs*/
-             void * blockdata;
-             if(*it == "ID  ")
-                 blockdata = malloc(sizeof(int64_t)*snap.GetBlockSize(*it,i));
-             else
-                blockdata =malloc(sizeof(float)*snap.GetBlockSize(*it,i));
-             snap.GetBlock(*it,blockdata,snap.GetNpart(i),0,0);
-             if(verbose)
-                 cout<<"Converting type "<<i<<" block "<<*it<<" to "<<type_map[*it]<<endl;
-             hdf5snap.WriteBlocks(type_map[*it], i, blockdata, snap.GetNpart(i), 0);
-             free(blockdata);
-         }
+     try {
+        GWriteSnap hdf5snap(outfile, npart, snap.GetNumFiles());
+        hdf5snap.WriteHeaders(head);
+        /*Now write some data types*/
+        /*Initialise the map*/
+        init_map();
+        set<string> blocks=snap.GetBlocks();
+        set<string>::iterator it;
+        for(int i = 0; i < N_TYPE; i++){
+            if(snap.GetNpart(i) == 0)
+                continue;
+            for(it=blocks.begin() ; it != blocks.end(); it++){
+                /*Default to float, except when we have IDs*/
+                void * blockdata;
+                if(*it == "ID  ")
+                    blockdata = malloc(sizeof(int64_t)*snap.GetBlockSize(*it,i));
+                else
+                   blockdata =malloc(sizeof(float)*snap.GetBlockSize(*it,i));
+                snap.GetBlock(*it,blockdata,snap.GetNpart(i),0,0);
+                if(verbose)
+                    cout<<"Converting type "<<i<<" block "<<*it<<" to "<<type_map[*it]<<endl;
+                hdf5snap.WriteBlocks(type_map[*it], i, blockdata, snap.GetNpart(i), 0);
+                free(blockdata);
+            }
+        }
+     }
+     catch(const std::ios_base::failure& e) {
+         cerr<<e.what();
+         return 1;
      }
      return 0;
 }

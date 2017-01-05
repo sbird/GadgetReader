@@ -46,19 +46,26 @@ namespace GadgetWriter{
                  return 0;
           }
           std::map<std::string, std::map<int,int64_t> >::iterator ip=blocks.find(BlockName);
-          if(ip == blocks.end())
+          if(ip == blocks.end()) {
                   WARN("Block %s not found\n",BlockName.c_str());
+                  return 0;
+          }
           /*Note that because internally all map keys are ordered by
            * comparison, the first element of the map is also the one with the lowest type,
            * and the final element has the largest type*/
           int MinType =  (ip->second).begin()->first;
           int MaxType =  (--(ip->second).end())->first;
           std::map<int,int64_t>::iterator it=((*ip).second).find(type);
-          if(it == ((*ip).second).end())
+          if(it == ((*ip).second).end()) {
                 WARN("Type %d not found in block %s\n",type,BlockName.c_str());
+                return 0;
+          }
           //If we are writing from the beginning, write the block header
           if(begin == 0 && type == MinType){
-                fseek(fd, (*it).second,SEEK_SET);
+                if(fseek(fd, (*it).second,SEEK_SET)) {
+                    WARN("Could not seek to %lu in file %s\n",(*it).second, filename.c_str());
+                    return 0;
+                }
                 if(write_block_header(fd, BlockName, partlen*calc_block_size(BlockName))){
                         WARN("Could not write block header %s in file %s\n",BlockName.c_str(), filename.c_str());
                         return 0;
