@@ -121,7 +121,7 @@ namespace GadgetReader{
 
   //This takes an open file and constructs a map of where the blocks are within it, and then returns said map.
   //It ought to support endian swapped files as well as Gadget-I files.
-   GSnapFile::GSnapFile(const f_name strfile, bool debug, std::vector<std::string>* BlockNames) : name(strfile),debug(debug)
+   GSnapFile::GSnapFile(const f_name strfile, bool debug, std::vector<std::string>* BlockNames) : name(strfile),swap_endian(false), format_2(true), debug(debug)
   {
           //Default ordering of blocks for Gadget-I files
           //The odd double declaration of a string array is to work around lack of initialiser lists in C++ 98.
