@@ -32,6 +32,20 @@ namespace GadgetWriter{
           return npart[type];
   }
 
+  bool name_compare(const block_info& i1, const std::string& name)
+  {
+      if(i1.name == name)
+          return true;
+      return false;
+  }
+
+  struct special_compare : public std::unary_function<block_info, bool>
+  {
+    explicit special_compare(const std::string &baseline) : baseline(baseline) {}
+    bool operator() (const block_info &arg)
+    { return name_compare(arg, baseline); }
+    std::string baseline;
+  };
 
   GWriteSnap::GWriteSnap(std::string snap_filename, std::valarray<int64_t> npart_in,int num_files_in,int idsize,  bool debug, bool format_2,std::vector<block_info> *BlockNamesIn) :
       GWriteBaseSnap(2, npart_in, num_files_in, debug)
@@ -86,13 +100,11 @@ namespace GadgetWriter{
                                 continue; //We don't want head blocks
                         if( hdf5 && ((*it).name == std::string("Header") ) )
                                 continue; //We don't want head blocks
-                        for(jt=BlockNames.begin();jt<BlockNames.end();++jt){
-                                if(jt == BlockNames.end())
-                                        BlockNames.push_back(*it);
-                                else if((*jt).name == (*it).name){
-                                        (*jt)=(*it);
-                                        break;
-                                }
+                        if(std::find_if(BlockNames.begin(), BlockNames.end(), special_compare((*it).name)) != BlockNames.end()) {
+                            (*jt) = (*it);
+                        }
+                        else {
+                            BlockNames.push_back(*it);
                         }
                 }
           }
