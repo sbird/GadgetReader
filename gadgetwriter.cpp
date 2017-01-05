@@ -100,7 +100,8 @@ namespace GadgetWriter{
                                 continue; //We don't want head blocks
                         if( hdf5 && ((*it).name == std::string("Header") ) )
                                 continue; //We don't want head blocks
-                        if(std::find_if(BlockNames.begin(), BlockNames.end(), special_compare((*it).name)) != BlockNames.end()) {
+                        jt = std::find_if(BlockNames.begin(), BlockNames.end(), special_compare((*it).name));
+                        if(jt != BlockNames.end()) {
                             (*jt) = (*it);
                         }
                         else {
