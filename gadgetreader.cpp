@@ -136,6 +136,8 @@ namespace GadgetReader{
           if(!(fd=fopen(strfile.c_str(),"r")) || check_filetype(fd)){
                   WARN("Could not open %s (.0)\n",strfile.c_str());
                   WARN("Does not exist, or is corrupt.\n");
+                  if(fd)
+                      fclose(fd);
                   return;
           }
           header.num_files = -1;
@@ -172,12 +174,11 @@ namespace GadgetReader{
                           //Read the actual header. 
                           if(c_info.length != sizeof(gadget_header)){
                                   WARN("Mis-sized HEAD block in %s\n",file);
-                                  return;
                           }
-                          if((fread(&header,sizeof(gadget_header),1,fd)!=1) ||
+                          if((fread(&header,c_info.length,1,fd)!=1) ||
                           (fread(&record_size,sizeof(uint32_t),1,fd)!=1)){
-                                  WARN("Could not read HEAD in %s!\n",file);
-                                  return;
+                                  WARN("Could not read HEAD, skipping file: %s!\n",file);
+                                  break;
                           }
                           if(swap_endian){
                               endian_swap(&record_size);
@@ -185,7 +186,7 @@ namespace GadgetReader{
                           }
                           if(record_size != sizeof(gadget_header)){
                                  WARN("Bad record size for HEAD in %s!\n",file);
-                                 return;
+                                 break;
                           }
                           /*Set the total_file_part local variable*/
                           for(int i=0; i<N_TYPE; i++)
@@ -250,7 +251,7 @@ namespace GadgetReader{
                       ( !swap_endian && record_size != c_info.length) ||
                       ( swap_endian && endian_swap(&record_size) != c_info.length)){
                           WARN("Corrupt record in %s footer for block %s (%lu vs %u), skipping rest of file\n",file, c_name, c_info.length, record_size);
-                          return;
+                          break;
                   }
                   /*Store new block length*/
                   if(extra_len >= ((uint64_t)1)<<32)
@@ -267,6 +268,7 @@ namespace GadgetReader{
                   }
                   blocks[std::string(c_name)] = c_info;
           }
+          fclose(fd);
           return;
   }
  
