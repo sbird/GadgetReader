@@ -133,6 +133,8 @@ namespace GadgetReader{
           /*Total number of particles in file*/
           total_file_part=0;
           const char * file=strfile.c_str();
+          header = {};
+          header.num_files = -1;
           if(!(fd=fopen(strfile.c_str(),"r")) || check_filetype(fd)){
                   WARN("Could not open %s (.0)\n",strfile.c_str());
                   WARN("Does not exist, or is corrupt.\n");
@@ -140,8 +142,6 @@ namespace GadgetReader{
                       fclose(fd);
                   return;
           }
-          header = {};
-          header.num_files = -1;
           //Read now until we run out of file
           while(!feof(fd)){
                   block_info c_info;
