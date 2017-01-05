@@ -180,7 +180,7 @@ namespace GadgetReader{
     /** Private function to read the block (not the file) header. */
     uint32_t read_block_head(char* name, FILE *fd, const char * file);
     
-    bool SetBlockTypes(block_info block);
+    bool SetBlockTypes(block_info& block);
   
   } ;
     
@@ -277,7 +277,7 @@ namespace GadgetReader{
           private:
                   /** Private function to check whether two headers are
                    * consistent with being from the same snapshot. */
-                  DLL_LOCAL bool check_headers(gadget_header head1, gadget_header head2);
+                  DLL_LOCAL bool check_headers(const gadget_header& head1, const gadget_header& head2);
                   /** Base filename for the snapshot*/
                   f_name base_filename;
 

@@ -45,7 +45,7 @@ namespace GadgetWriter{
 
   }
 
-  int GWriteHDFFile::WriteHeader(gadget_header header)
+  int GWriteHDFFile::WriteHeader(gadget_header& header)
   {
             herr_t herr;
             for(int i=0; i<N_TYPE; i++){

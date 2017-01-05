@@ -21,7 +21,7 @@ namespace GadgetWriter{
                 // Begin should specify which particle to begin at
                 int64_t WriteBlock(std::string BlockName, int type, void *data, int partlen, uint32_t np_write, uint32_t begin);
                 /** Note npart is silently ignored.*/
-                int WriteHeader(gadget_header head);
+                int WriteHeader(gadget_header& head);
                 ~GWriteFile()
                 {
                         if(fd)
@@ -53,7 +53,7 @@ namespace GadgetWriter{
                 //begin should specify which particle to begin at
                 int64_t WriteBlock(std::string BlockName, int type, void *data, int partlen, uint32_t np_write, uint32_t begin);
                 /** Note npart is silently ignored.*/
-                int WriteHeader(gadget_header head);
+                int WriteHeader(gadget_header& head);
                 ~GWriteHDFFile(){};
          private:
                 bool debug;

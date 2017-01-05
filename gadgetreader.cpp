@@ -136,8 +136,11 @@ namespace GadgetReader{
           if(!(fd=fopen(strfile.c_str(),"r")) || check_filetype(fd)){
                   WARN("Could not open %s (.0)\n",strfile.c_str());
                   WARN("Does not exist, or is corrupt.\n");
+                  if(fd)
+                      fclose(fd);
                   return;
           }
+          header = {};
           header.num_files = -1;
           //Read now until we run out of file
           while(!feof(fd)){
@@ -156,10 +159,13 @@ namespace GadgetReader{
                      * or just make something up if all else fails.*/
                     if(BlockNames == NULL && cur_block< default_blocks.size())
                                     strncpy(c_name, default_blocks[cur_block++].c_str(),5);
-                    else if(BlockNames != NULL && cur_block< (*BlockNames).size())
+                    else if(BlockNames != NULL && cur_block< (*BlockNames).size()) {
                             strncpy(c_name, (*BlockNames)[cur_block++].c_str(),5);
-                    else
+                            c_name[4]='\0';
+                    }
+                    else {
                             c_name[0]=(char) 65-default_blocks.size()+cur_block;
+                    }
                     /* Read the length from the record length*/
                     if(fread(&record_size,sizeof(uint32_t),1,fd)!=1)
                             break;//out of file
@@ -172,12 +178,11 @@ namespace GadgetReader{
                           //Read the actual header. 
                           if(c_info.length != sizeof(gadget_header)){
                                   WARN("Mis-sized HEAD block in %s\n",file);
-                                  return;
                           }
-                          if((fread(&header,sizeof(gadget_header),1,fd)!=1) ||
+                          if((fread(&header,c_info.length,1,fd)!=1) ||
                           (fread(&record_size,sizeof(uint32_t),1,fd)!=1)){
-                                  WARN("Could not read HEAD in %s!\n",file);
-                                  return;
+                                  WARN("Could not read HEAD, skipping file: %s!\n",file);
+                                  break;
                           }
                           if(swap_endian){
                               endian_swap(&record_size);
@@ -185,7 +190,7 @@ namespace GadgetReader{
                           }
                           if(record_size != sizeof(gadget_header)){
                                  WARN("Bad record size for HEAD in %s!\n",file);
-                                 return;
+                                 break;
                           }
                           /*Set the total_file_part local variable*/
                           for(int i=0; i<N_TYPE; i++)
@@ -250,23 +255,26 @@ namespace GadgetReader{
                       ( !swap_endian && record_size != c_info.length) ||
                       ( swap_endian && endian_swap(&record_size) != c_info.length)){
                           WARN("Corrupt record in %s footer for block %s (%lu vs %u), skipping rest of file\n",file, c_name, c_info.length, record_size);
-                          return;
+                          break;
                   }
                   /*Store new block length*/
                   if(extra_len >= ((uint64_t)1)<<32)
                         c_info.length=extra_len;
                   // Set up the particle types in the block. This also is a heuristic,
                   // which assumes that blocks are either fully present or not for a given particle type
-                  if(!SetBlockTypes(c_info)){
+                  if(SetBlockTypes(c_info)){
+                    //Append the current info to the map; if there are duplicates move ahead one.
+                    while(blocks.count(c_name) > 0){
+                          c_name[3]++;
+                    }
+                    blocks[std::string(c_name)] = c_info;
+                  }
+                  else {
                         WARN("SetBlockTypes failed for block %s in file %s, length %lu\n",c_name,file,c_info.length);
                         continue;
                   }
-                  //Append the current info to the map; if there are duplicates move ahead one.
-                  while(blocks.count(c_name) > 0){
-                          c_name[3]++;
-                  }
-                  blocks[std::string(c_name)] = c_info;
           }
+          fclose(fd);
           return;
   }
  
@@ -276,7 +284,7 @@ namespace GadgetReader{
   * name - place to store block name
   * fd - file descriptor
   * file - filename of open file */
- uint32_t GSnapFile::read_block_head(char* name, FILE *fd, const char * file)
+ uint32_t GSnapFile::read_block_head(char name[], FILE *fd, const char * file)
  {
         uint32_t head[5];
         //Read the "block header" record, only present on Gadget-II files. 
@@ -299,7 +307,7 @@ namespace GadgetReader{
         }
         strncpy(name,(char *)&head[1],4);
         //Null-terminate the string
-        *(name+5)='\0';
+        name[4]='\0';
         //Don't include the two "record_size" indicators in the total length count
         return head[2]-2*sizeof(uint32_t);
   }
@@ -353,7 +361,7 @@ namespace GadgetReader{
   /*Check the consistency of file headers. This is just a short sanity check 
    * to make sure the user hasn't put two entirely different simulations with the same 
    * snapshot name in the same directory or something*/
-  bool GSnap::check_headers(gadget_header head1, gadget_header head2)
+  bool GSnap::check_headers(const gadget_header& head1, const gadget_header& head2)
   {
     /*Check single quantities*/
     /*Even the floats ought to be really identical if we have read them from disc*/
@@ -549,7 +557,7 @@ namespace GadgetReader{
   gadget_header GSnap::GetHeader(int i)
   {
         if((int)file_maps.size()<= i){
-                gadget_header head;
+                gadget_header head = {};
                 head.num_files=-1;
                 head.npart[0]=0;
                 head.npart[1]=0;
@@ -655,7 +663,7 @@ namespace GadgetReader{
           return data;
   }
 
-  bool GSnapFile::SetBlockTypes(block_info block)
+  bool GSnapFile::SetBlockTypes(block_info& block)
   {
         /* Set up the particle types in the block, with a heuristic,
         which assumes that blocks are either fully present or not for a given particle type */
