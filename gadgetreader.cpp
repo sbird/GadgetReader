@@ -158,10 +158,13 @@ namespace GadgetReader{
                      * or just make something up if all else fails.*/
                     if(BlockNames == NULL && cur_block< default_blocks.size())
                                     strncpy(c_name, default_blocks[cur_block++].c_str(),5);
-                    else if(BlockNames != NULL && cur_block< (*BlockNames).size())
+                    else if(BlockNames != NULL && cur_block< (*BlockNames).size()) {
                             strncpy(c_name, (*BlockNames)[cur_block++].c_str(),5);
-                    else
+                            c_name[4]='\0';
+                    }
+                    else {
                             c_name[0]=(char) 65-default_blocks.size()+cur_block;
+                    }
                     /* Read the length from the record length*/
                     if(fread(&record_size,sizeof(uint32_t),1,fd)!=1)
                             break;//out of file
