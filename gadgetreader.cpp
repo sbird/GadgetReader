@@ -140,6 +140,7 @@ namespace GadgetReader{
                       fclose(fd);
                   return;
           }
+          header = {};
           header.num_files = -1;
           //Read now until we run out of file
           while(!feof(fd)){
@@ -261,15 +262,17 @@ namespace GadgetReader{
                         c_info.length=extra_len;
                   // Set up the particle types in the block. This also is a heuristic,
                   // which assumes that blocks are either fully present or not for a given particle type
-                  if(!SetBlockTypes(c_info)){
+                  if(SetBlockTypes(c_info)){
+                    //Append the current info to the map; if there are duplicates move ahead one.
+                    while(blocks.count(c_name) > 0){
+                          c_name[3]++;
+                    }
+                    blocks[std::string(c_name)] = c_info;
+                  }
+                  else {
                         WARN("SetBlockTypes failed for block %s in file %s, length %lu\n",c_name,file,c_info.length);
                         continue;
                   }
-                  //Append the current info to the map; if there are duplicates move ahead one.
-                  while(blocks.count(c_name) > 0){
-                          c_name[3]++;
-                  }
-                  blocks[std::string(c_name)] = c_info;
           }
           fclose(fd);
           return;
@@ -554,7 +557,7 @@ namespace GadgetReader{
   gadget_header GSnap::GetHeader(int i)
   {
         if((int)file_maps.size()<= i){
-                gadget_header head;
+                gadget_header head = {};
                 head.num_files=-1;
                 head.npart[0]=0;
                 head.npart[1]=0;
@@ -660,7 +663,7 @@ namespace GadgetReader{
           return data;
   }
 
-  bool GSnapFile::SetBlockTypes(block_info block)
+  bool GSnapFile::SetBlockTypes(block_info& block)
   {
         /* Set up the particle types in the block, with a heuristic,
         which assumes that blocks are either fully present or not for a given particle type */

@@ -180,7 +180,7 @@ namespace GadgetReader{
     /** Private function to read the block (not the file) header. */
     uint32_t read_block_head(char* name, FILE *fd, const char * file);
     
-    bool SetBlockTypes(block_info block);
+    bool SetBlockTypes(block_info& block);
   
   } ;
     
