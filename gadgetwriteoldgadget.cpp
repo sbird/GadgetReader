@@ -54,7 +54,10 @@ namespace GadgetWriter{
            * comparison, the first element of the map is also the one with the lowest type,
            * and the final element has the largest type*/
           int MinType =  (ip->second).begin()->first;
-          int MaxType =  (--(ip->second).end())->first;
+          std::map<int,int64_t>::iterator ee = (ip->second).end();
+          int MaxType = MinType;
+          if(ee != (ip->second).begin())
+            MaxType =  (--(ip->second).end())->first;
           std::map<int,int64_t>::iterator it=((*ip).second).find(type);
           if(it == ((*ip).second).end()) {
                 WARN("Type %d not found in block %s\n",type,BlockName.c_str());
