@@ -105,7 +105,7 @@ namespace GadgetWriter{
                   int GetFormat(){
                       return format;
                   }
-                  ~GWriteBaseSnap() {};
+                  virtual ~GWriteBaseSnap() {};
           protected:
                   /** Vector to store the maps of each simulation snapshot */
                   const std::valarray<int64_t> npart;
