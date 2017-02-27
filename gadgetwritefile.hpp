@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 /*Error output macros*/
-#define ERROR(...) do{ fprintf(stderr,__VA_ARGS__);abort();}while(0)
+#define ERROR(...) do{ fprintf(stderr,__VA_ARGS__);exit(1);}while(0)
 #define WARN(...) do{ \
         if(debug){ \
                 fprintf(stderr,"[GadgetWriter]: "); \
