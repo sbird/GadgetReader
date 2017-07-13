@@ -39,11 +39,11 @@ testdep = [dependency('boost', modules: 'test'),]
 testsrc = ['btest.cpp']
 boostdep = [dependency('boost', modules: 'test'),]
 testexe = executable('btest', sources: testsrc, link_with: librgad, dependencies: boostdep)
-test('Boost Tests',testexe, workdir: meson.source_root())
+test('Boost Tests',testexe, workdir: meson.current_source_dir())
 #pgtest = executable('PGtest', 'PGIItest.sh', pgii)
 #pgtest = executable('PGtest', 'PGIItest.sh')
 #pgtest = run_target('PGtest', command : ['PGIItest.sh',pgii], build_by_default: true)
-pgdata = [meson.source_root()+'/test_g2_snap', meson.source_root()+'/PGIIhead_out.txt']
+pgdata = [meson.current_source_dir()+'/test_g2_snap', meson.current_source_dir()+'/PGIIhead_out.txt']
 test('Header test',find_program('PGIItest.sh'), args: [pgii.full_path(), ]+ pgdata)
 
 run_target('doc', command: 'doxygen')
