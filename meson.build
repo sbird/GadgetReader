@@ -38,4 +38,4 @@ test('Boost Tests',testexe, workdir: meson.source_root())
 pgdata = [meson.source_root()+'/test_g2_snap', meson.source_root()+'/PGIIhead_out.txt']
 test('Header test',find_program('PGIItest.sh'), args: [pgii.full_path(), ]+ pgdata)
 
-#doc = run_target('Doxygen'
+run_target('doc', 'doxygen')
