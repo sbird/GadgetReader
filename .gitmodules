@@ -1,3 +1,0 @@
-[submodule "bigfile"]
-	path = bigfile
-	url = https://github.com/sbird/bigfile.git
