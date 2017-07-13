@@ -43,7 +43,7 @@ ifeq (BIGFILE_MPI,$(findstring BIGFILE_MPI,${OPTS}))
 else
 	LIBBIGFILE = libbigfile.a
 endif
-	BGFL_INC = -Ibigfile/src
+	BGFL_INC = -Isubprojects/bigfile/src
 else
 	BGFL_LINK =
 	BGFL_INC =
