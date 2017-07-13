@@ -13,8 +13,8 @@ if hdf5[0].found()
 endif
 #Add bigfile. It is unlikely to be packaged so use the internal version
 add_project_arguments('-DHAVE_BGFL',language: 'cpp')
-bfsrc = ['bigfile/src/bigfile.c']
-bfinc = include_directories('bigfile/src')
+bfsrc = ['subprojects/bigfile/src/bigfile.c']
+bfinc = include_directories('subprojects/bigfile/src')
 bigfile = static_library('bigfile', sources: bfsrc)
 
 wsrc = ['gadgetwriter.cpp', 'gadgetwritehdf.cpp', 'gadgetwriteoldgadget.cpp', 'gadgetwritebigfile.cpp']
@@ -38,4 +38,4 @@ test('Boost Tests',testexe, workdir: meson.source_root())
 pgdata = [meson.source_root()+'/test_g2_snap', meson.source_root()+'/PGIIhead_out.txt']
 test('Header test',find_program('PGIItest.sh'), args: [pgii.full_path(), ]+ pgdata)
 
-run_target('doc', 'doxygen')
+run_target('doc', command: 'doxygen')
