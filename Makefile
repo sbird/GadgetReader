@@ -35,7 +35,7 @@ else
 	HDF_LINK =
 endif
 ifeq (HAVE_BGFL,$(findstring HAVE_BGFL,${OPTS}))
-	BGFL_LINK = -Lbigfile/src -lbigfile
+	BGFL_LINK = -Lsubprojects/bigfile/src -lbigfile
 ifeq (BIGFILE_MPI,$(findstring BIGFILE_MPI,${OPTS}))
    	BGFL_LINK += -lbigfile-mpi
 	LINK=mpic++
