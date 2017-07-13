@@ -14,8 +14,16 @@ endif
 #Add bigfile. It is unlikely to be packaged so use the internal version
 add_project_arguments('-DHAVE_BGFL',language: 'cpp')
 bfsrc = ['subprojects/bigfile/src/bigfile.c']
+#Do a submodule checkout if necessary.
+#If bigfile were meson as well, we could use subprojects here,
+#but at the moment there is no support for that.
+pychk = 'import os.path; import sys; sys.exit(os.path.exists(\'subprojects/bigfile/src/bigfile.c\'))'
+message(run_command('python', '-c', pychk).stderr())
+if run_command('python', '-c', pychk).returncode() == 0
+    run_command('git', 'submodule', 'update' ,'--init')
+endif
 bfinc = include_directories('subprojects/bigfile/src')
-bigfile = static_library('bigfile', sources: bfsrc)
+bigfile = static_library('bigfile', sources: bfsrc, include_directories: bfinc)
 
 wsrc = ['gadgetwriter.cpp', 'gadgetwritehdf.cpp', 'gadgetwriteoldgadget.cpp', 'gadgetwritebigfile.cpp']
 rsrc = ['gadgetreader.cpp']
