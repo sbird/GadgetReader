@@ -47,3 +47,5 @@ pgdata = [meson.source_root()+'/test_g2_snap', meson.source_root()+'/PGIIhead_ou
 test('Header test',find_program('PGIItest.sh'), args: [pgii.full_path(), ]+ pgdata)
 
 run_target('doc', command: 'doxygen')
+
+gread_dep = declare_dependency(include_directories: include_directories('.'))
