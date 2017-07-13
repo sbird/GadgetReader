@@ -48,4 +48,5 @@ test('Header test',find_program('PGIItest.sh'), args: [pgii.full_path(), ]+ pgda
 
 run_target('doc', command: 'doxygen')
 
-gread_dep = declare_dependency(include_directories: include_directories('.'))
+gread_dep = declare_dependency(link_with: librgad, include_directories: include_directories('.'))
+gwrite_dep = declare_dependency(link_with: libwgad, include_directories: include_directories('.'))
