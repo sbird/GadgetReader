@@ -9,10 +9,10 @@ if not hdf5[0].found()
     hdf5 = [comp.find_library('hdf5_hl', required: false),comp.find_library('hdf5', required: false)]
 endif
 if hdf5[0].found()
-    add_global_arguments('-DHAVE_HDF5',language: 'cpp')
+    add_project_arguments('-DHAVE_HDF5',language: 'cpp')
 endif
 #Add bigfile. It is unlikely to be packaged so use the internal version
-add_global_arguments('-DHAVE_BGFL',language: 'cpp')
+add_project_arguments('-DHAVE_BGFL',language: 'cpp')
 bfsrc = ['bigfile/src/bigfile.c']
 bfinc = include_directories('bigfile/src')
 bigfile = static_library('bigfile', sources: bfsrc)
